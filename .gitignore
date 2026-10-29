@@ -1,0 +1,23 @@
+# Secretos: nunca al repositorio (solo .env.example)
+.env
+.env.*
+!.env.example
+
+# Dependencias
+node_modules/
+laravel/vendor/
+
+# Material del curso no distribuido
+docs/Proyecto_Final_CRM_Enunciado.pdf
+
+# Laravel (además de laravel/.gitignore)
+laravel/storage/*.key
+laravel/public/build/
+laravel/public/hot
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

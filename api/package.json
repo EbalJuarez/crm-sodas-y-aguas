@@ -1,0 +1,10 @@
+{
+  "name": "crm-agua-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API REST del vendedor: CRM de una distribuidora de agua purificada y gaseosas",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  }
+}
