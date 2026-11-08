@@ -1,6 +1,17 @@
-import { sesionNoAutorizada } from './estado.js';
+import { API_BASE_URL } from './config.js';
 
-const API_BASE_URL = 'http://127.0.0.1:3000/api';
+/**
+ * Único módulo que habla con la API. No conoce el estado: main.js le pasa dos avisos
+ * (configurarApi) para el indicador de carga y para un 401 en plena sesión.
+ */
+let avisos = {
+    pendientes: () => {},
+    noAutorizado: () => {},
+};
+
+export function configurarApi(nuevos) {
+    avisos = { ...avisos, ...nuevos };
+}
 
 export class ApiError extends Error {
     constructor(status, payload) {
@@ -11,50 +22,76 @@ export class ApiError extends Error {
     }
 }
 
-export async function iniciarSesion(correo, clave) {
-    return solicitar('/auth/login', {
-        method: 'POST',
-        body: { correo, clave },
-    });
+export class ConexionError extends Error {
+    constructor() {
+        super('No se pudo conectar con la API. Compruebe que esté en marcha (npm start en api/) e inténtelo de nuevo.');
+        this.name = 'ConexionError';
+    }
 }
 
-export async function solicitar(path, { method = 'GET', body, token } = {}) {
+export async function solicitar(ruta, { method = 'GET', body, token } = {}) {
     const headers = { Accept: 'application/json' };
-
     if (body !== undefined) {
         headers['Content-Type'] = 'application/json';
     }
-
     if (token) {
         headers.Authorization = `Bearer ${token}`;
     }
 
-    let response;
+    avisos.pendientes(1);
     try {
-        response = await fetch(`${API_BASE_URL}${path}`, {
-            method,
-            headers,
-            body: body === undefined ? undefined : JSON.stringify(body),
-        });
-    } catch {
-        const error = new Error('No se pudo conectar con la API. Compruebe que esté en marcha.');
-        error.name = 'ConexionError';
-        throw error;
-    }
-
-    let payload = null;
-    try {
-        payload = await response.json();
-    } catch {
-        payload = null;
-    }
-
-    if (!response.ok) {
-        if (response.status === 401) {
-            sesionNoAutorizada();
+        let respuesta;
+        try {
+            respuesta = await fetch(`${API_BASE_URL}${ruta}`, {
+                method,
+                headers,
+                body: body === undefined ? undefined : JSON.stringify(body),
+            });
+        } catch {
+            throw new ConexionError();
         }
-        throw new ApiError(response.status, payload);
-    }
 
-    return payload;
+        let payload = null;
+        if (respuesta.status !== 204) {
+            try {
+                payload = await respuesta.json();
+            } catch {
+                payload = null;
+            }
+        }
+
+        if (!respuesta.ok) {
+            // Solo una petición CON token puede significar «sesión vencida» (token alterado,
+            // vencido o cuenta desactivada). El 401 del login es «credenciales incorrectas».
+            if (respuesta.status === 401 && token) {
+                avisos.noAutorizado();
+            }
+            throw new ApiError(respuesta.status, payload);
+        }
+
+        return payload;
+    } finally {
+        avisos.pendientes(-1);
+    }
+}
+
+export function iniciarSesion(correo, clave) {
+    return solicitar('/auth/login', { method: 'POST', body: { correo, clave } });
+}
+
+export function listarCartera(token, q = '') {
+    const consulta = q.trim() === '' ? '' : `?q=${encodeURIComponent(q.trim())}`;
+    return solicitar(`/clientes${consulta}`, { token });
+}
+
+export function listarDisponibles(token) {
+    return solicitar('/clientes/disponibles', { token });
+}
+
+export function crearCliente(token, datos) {
+    return solicitar('/clientes', { method: 'POST', body: datos, token });
+}
+
+export function tomarCliente(token, id) {
+    return solicitar(`/clientes/${encodeURIComponent(id)}/tomar`, { method: 'POST', token });
 }

@@ -8,6 +8,7 @@
 
 body {
     min-width: 320px;
+    overflow-wrap: anywhere; /* nombres o correos largos sin espacios no ensanchan la página (F6.5) */
     background: var(--arena);
     color: var(--texto);
 }
@@ -63,6 +64,10 @@ body {
 .home-header {
     background: var(--agua-profunda);
     color: white;
+}
+
+.nav-underline .nav-link.active {
+    color: var(--agua-profunda);
 }
 
 .home-panel {
