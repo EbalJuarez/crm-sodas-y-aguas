@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Cliente;
+use App\Support\Correo;
 use App\Support\Nit;
 use App\Support\Telefono;
 use Illuminate\Foundation\Http\FormRequest;
@@ -69,7 +70,12 @@ class GuardarClienteRequest extends FormRequest
                     $fail('Escriba un teléfono de Guatemala de 8 dígitos.');
                 }
             }, Rule::unique('clientes', 'telefono')->ignore($ignorar)],
-            'correo' => ['bail', 'nullable', 'string', 'email', 'max:150'],
+            // `email` + la expresión común con la API (Correo::PATRON): las dos puertas aceptan lo mismo (L7.2).
+            'correo' => ['bail', 'nullable', 'string', 'email', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (! Correo::esValido($value)) {
+                    $fail('Escriba un correo válido.');
+                }
+            }, 'max:150'],
         ];
     }
 

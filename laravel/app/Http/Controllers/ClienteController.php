@@ -21,6 +21,12 @@ class ClienteController extends Controller
 
     public function index(Request $request): View
     {
+        // Un filtro con forma de arreglo (?q[]=x, ?vendedor_id[]=4) no lo envía el formulario:
+        // responde 400, como la API (spec 3.3), en lugar del 500 de convertir un arreglo en texto.
+        foreach (['q', 'vendedor_id'] as $filtro) {
+            abort_if(is_array($request->query($filtro)), 400);
+        }
+
         $usuario = $request->user();
         $consulta = Cliente::query()->with('vendedor')->orderBy('nombre');
         $this->aplicarVisibilidad($consulta, $usuario);
@@ -29,10 +35,12 @@ class ClienteController extends Controller
             $busqueda = trim((string) $request->query('q'));
             $nit = Nit::compactar($busqueda);
 
+            // P-8 «contiene»: % y _ se buscan como texto (escapados con \, el escape por omisión
+            // de LIKE en MySQL), igual que en la API. El valor va enlazado como parámetro.
             $consulta->where(function ($query) use ($busqueda, $nit) {
-                $query->where('nombre', 'like', "%{$busqueda}%");
+                $query->where('nombre', 'like', '%'.addcslashes($busqueda, '\\%_').'%');
                 if ($nit !== '') {
-                    $query->orWhere('nit', 'like', "%{$nit}%");
+                    $query->orWhere('nit', 'like', '%'.addcslashes($nit, '\\%_').'%');
                 }
             });
         }

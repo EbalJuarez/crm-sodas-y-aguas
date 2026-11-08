@@ -2,12 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Http\Requests\GuardarClienteRequest;
 use App\Models\Cliente;
 use App\Models\User;
+use App\Support\Correo;
 use App\Support\Nit;
 use App\Support\Telefono;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
 class ClientesTest extends TestCase
@@ -71,6 +74,36 @@ class ClientesTest extends TestCase
             $this->assertSame($caso['valido'], Telefono::esValido($caso['entrada']), $caso['entrada']);
             $this->assertSame($caso['normalizado'], Telefono::normalizar($caso['entrada']), $caso['entrada']);
         }
+
+        // La regla completa del campo en el panel (`email` + Correo::PATRON + max:150).
+        $reglaCorreo = ['correo' => (new GuardarClienteRequest)->rules()['correo']];
+        foreach ($casos['correo'] as $caso) {
+            $acepta = Validator::make(['correo' => $caso['entrada']], $reglaCorreo)->passes();
+            $this->assertSame($caso['valido'], $acepta, json_encode($caso['entrada']));
+            $this->assertSame($caso['valido'], Correo::esValido($caso['entrada']), json_encode($caso['entrada']));
+        }
+    }
+
+    public function test_busqueda_con_filtros_en_forma_de_arreglo_responde_400(): void
+    {
+        $this->actingAs($this->alicia)->get('/clientes?q[]=x')->assertStatus(400)
+            ->assertSee('La solicitud no es válida.');
+        $this->get('/clientes?q[a]=x')->assertStatus(400);
+        $this->get('/clientes?vendedor_id[]=4')->assertStatus(400);
+        $this->get('/clientes?q=')->assertOk();
+    }
+
+    public function test_busqueda_toma_porcentaje_y_guion_bajo_como_texto(): void
+    {
+        $this->crearCliente(null, ['nombre' => 'Tienda 100% agua', 'telefono' => '55551234']);
+        $this->crearCliente(null, ['nombre' => 'Tienda Central', 'telefono' => '55551235']);
+
+        $this->actingAs($this->alicia)->get(route('clientes.index', ['q' => '%']))
+            ->assertOk()->assertSee('Tienda 100% agua')->assertDontSee('Tienda Central');
+        $this->get(route('clientes.index', ['q' => '_']))
+            ->assertOk()->assertDontSee('Tienda 100% agua')->assertDontSee('Tienda Central');
+        $this->get(route('clientes.index', ['q' => "' OR 1=1 -- "]))
+            ->assertOk()->assertDontSee('Tienda Central');
     }
 
     public function test_crea_cliente_normalizado_y_acepta_varios_cf(): void
