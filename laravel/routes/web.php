@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,14 @@ Route::middleware(['auth', 'rol:administrador'])->group(function () {
     Route::resource('productos', ProductoController::class)->except(['show', 'destroy']);
     Route::patch('/productos/{producto}/estado', [ProductoController::class, 'cambiarEstado'])
         ->name('productos.estado');
+});
+
+Route::middleware(['auth', 'rol:administrador,supervisor'])->group(function () {
+    Route::resource('clientes', ClienteController::class)->except(['show']);
+    Route::patch('/clientes/{cliente}/asignar', [ClienteController::class, 'asignar'])
+        ->name('clientes.asignar');
+    Route::patch('/clientes/{cliente}/liberar', [ClienteController::class, 'liberar'])
+        ->name('clientes.liberar');
 });
 
 require __DIR__.'/auth.php';

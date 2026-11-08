@@ -23,6 +23,11 @@
                             Catálogo
                         </x-nav-link>
                     @endif
+                    @if (Auth::user()->esAdministrador() || Auth::user()->esSupervisor())
+                        <x-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.*')">
+                            Clientes
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -84,6 +89,11 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('productos.index')" :active="request()->routeIs('productos.*')">
                     Catálogo
+                </x-responsive-nav-link>
+            @endif
+            @if (Auth::user()->esAdministrador() || Auth::user()->esSupervisor())
+                <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.*')">
+                    Clientes
                 </x-responsive-nav-link>
             @endif
         </div>

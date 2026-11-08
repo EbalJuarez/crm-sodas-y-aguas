@@ -1,0 +1,26 @@
+{
+    "nit": [
+        {"entrada": "452 1817-k", "valido": true, "normalizado": "4521817K"},
+        {"entrada": "04521817K", "valido": true, "normalizado": "4521817K"},
+        {"entrada": "cf", "valido": true, "normalizado": null},
+        {"entrada": "4521817-1", "valido": false, "normalizado": null},
+        {"entrada": "", "valido": false, "normalizado": null}
+    ],
+    "telefono": [
+        {"entrada": "5021 2345", "valido": true, "normalizado": "50212345"},
+        {"entrada": "502 5512 3456", "valido": true, "normalizado": "55123456"},
+        {"entrada": "+502 5512 3456", "valido": true, "normalizado": "55123456"},
+        {"entrada": "+502 5021 2345", "valido": true, "normalizado": "50212345"},
+        {"entrada": "(502) 5512-3456", "valido": true, "normalizado": "55123456"},
+        {"entrada": "502.5512.3456", "valido": true, "normalizado": "55123456"},
+        {"entrada": "5555-1234", "valido": true, "normalizado": "55551234"},
+        {"entrada": "502 551 2345", "valido": false, "normalizado": null},
+        {"entrada": "+502 551 2345", "valido": false, "normalizado": null},
+        {"entrada": "+502 1234 5678", "valido": false, "normalizado": null},
+        {"entrada": "0212 3456", "valido": false, "normalizado": null},
+        {"entrada": "00502 5512 3456", "valido": false, "normalizado": null},
+        {"entrada": "5512+3456", "valido": false, "normalizado": null},
+        {"entrada": "5512 345a", "valido": false, "normalizado": null},
+        {"entrada": "", "valido": false, "normalizado": null}
+    ]
+}
