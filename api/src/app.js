@@ -11,6 +11,14 @@ if (!corsOrigin) {
   throw new Error('La variable CORS_ORIGIN es obligatoria.');
 }
 
+// S2: la API no arranca sin un secreto de al menos 32 caracteres.
+const jwtSecret = process.env.JWT_SECRET ?? '';
+if (jwtSecret.length < 32) {
+  throw new Error(jwtSecret === ''
+    ? 'La variable JWT_SECRET es obligatoria. Defínala en api/.env con al menos 32 caracteres aleatorios.'
+    : `JWT_SECRET mide ${jwtSecret.length} caracteres; debe tener al menos 32 caracteres aleatorios.`);
+}
+
 app.use(cors({
   origin: (requestOrigin, callback) => {
     if (requestOrigin === undefined || requestOrigin === corsOrigin) {

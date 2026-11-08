@@ -2,11 +2,18 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Router } from 'express';
 import pool from '../db.js';
+import { exigirCuerpo } from '../middleware/cuerpo.js';
 
 const router = Router();
 const credencialesInvalidas = 'El correo o la clave son incorrectos.';
 
-router.post('/login', async (request, response) => {
+// Hash bcrypt fijo de un texto aleatorio que nadie conoce (costo 12, como los de Laravel).
+// Se compara contra él cuando el correo no existe, para que esa respuesta tarde lo mismo
+// que una clave incorrecta y no se puedan adivinar correos por el tiempo. Es una constante:
+// la API no genera hashes (S1), solo los compara.
+const HASH_FICTICIO = '$2y$12$5CXnlHKXLNARCq23abG8G.qBs4eEhYlrU1TlGf6ccskasRiqo3oQ2';
+
+router.post('/login', exigirCuerpo, async (request, response) => {
   const body = request.body ?? {};
   const errores = {};
 
@@ -29,7 +36,10 @@ router.post('/login', async (request, response) => {
   );
   const user = rows[0];
 
-  if (!user || !(await bcrypt.compare(body.clave, user.password))) {
+  // Siempre se ejecuta una comparación bcrypt, exista o no el correo.
+  const claveCorrecta = await bcrypt.compare(body.clave, user ? user.password : HASH_FICTICIO);
+
+  if (!user || !claveCorrecta) {
     return response.status(401).json({ error: credencialesInvalidas });
   }
 
@@ -39,14 +49,10 @@ router.post('/login', async (request, response) => {
     });
   }
 
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('La variable JWT_SECRET es obligatoria.');
-  }
-
+  // JWT_SECRET ya se validó al arrancar (app.js).
   const token = jwt.sign(
     {},
-    secret,
+    process.env.JWT_SECRET,
     {
       algorithm: 'HS256',
       subject: String(user.id),
