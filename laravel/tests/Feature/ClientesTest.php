@@ -361,6 +361,26 @@ class ClientesTest extends TestCase
         $this->assertNull($disponible->fresh());
     }
 
+    public function test_asignar_y_liberar_bloquean_primero_users_y_luego_clientes(): void
+    {
+        $cliente = $this->crearCliente();
+        $bloqueos = [];
+        DB::listen(function ($consulta) use (&$bloqueos): void {
+            if (str_contains($consulta->sql, 'for update')) {
+                $bloqueos[] = preg_match('/from `(\w+)`/', $consulta->sql, $m) ? $m[1] : $consulta->sql;
+            }
+        });
+
+        $this->actingAs($this->alicia)->patch(route('clientes.asignar', $cliente), ['vendedor_id' => $this->valeria->id])
+            ->assertSessionHasNoErrors();
+        $this->assertSame(['users', 'clientes'], $bloqueos, 'asignar');
+
+        $bloqueos = [];
+        $this->patch(route('clientes.liberar', $cliente))->assertSessionHasNoErrors();
+        $this->assertSame(['users', 'clientes'], $bloqueos, 'liberar');
+        $this->assertNull($cliente->fresh()->vendedor_id);
+    }
+
     public function test_las_demas_puertas_con_formrequest_rechazan_al_rol_antes_de_validar(): void
     {
         $producto = DB::table('productos')->insertGetId(['nombre' => 'Producto X', 'precio' => 10, 'created_at' => now(), 'updated_at' => now()]);

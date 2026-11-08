@@ -104,6 +104,7 @@ class ClienteController extends Controller
         );
 
         DB::transaction(function () use ($request, $cliente, $datos): void {
+            // Orden de bloqueos (igual en liberar y en la API): primero users, luego clientes.
             $usuario = $request->user();
             $vendedor = User::whereKey($datos['vendedor_id'])->lockForUpdate()->first();
 
@@ -137,10 +138,23 @@ class ClienteController extends Controller
         $this->autorizarVisibilidad($request->user(), $cliente);
 
         DB::transaction(function () use ($cliente): void {
+            // Mismo orden de bloqueos que asignar (y que la API al tomar o crear clientes):
+            // primero la fila del vendedor en users, luego la del cliente. Con órdenes distintos,
+            // un asignar y un liberar simultáneos podían bloquearse mutuamente (deadlock).
+            $vendedorId = Cliente::whereKey($cliente->id)->value('vendedor_id');
+            $vendedorId = $vendedorId === null ? null : (int) $vendedorId;
+
+            if ($vendedorId !== null) {
+                User::whereKey($vendedorId)->lockForUpdate()->first();
+            }
+
             $bloqueado = Cliente::whereKey($cliente->id)->lockForUpdate()->firstOrFail();
 
-            if ($bloqueado->vendedor_id !== null) {
-                User::whereKey($bloqueado->vendedor_id)->lockForUpdate()->first();
+            // Si entre la lectura y el bloqueo otro proceso lo reasignó, no se libera a ciegas.
+            if ($bloqueado->vendedor_id !== $vendedorId) {
+                throw ValidationException::withMessages([
+                    'cliente' => 'El cliente cambió de vendedor mientras se liberaba. Revise la lista y vuelva a intentarlo.',
+                ]);
             }
 
             if (DB::table('oportunidades')
