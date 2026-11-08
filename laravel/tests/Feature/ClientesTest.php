@@ -266,6 +266,40 @@ class ClientesTest extends TestCase
         $this->assertSame(10, Cliente::where('vendedor_id', $this->diego->id)->count());
     }
 
+    public function test_lo_ajeno_responde_404_antes_de_validar_en_cada_accion(): void
+    {
+        $ajeno = $this->crearCliente($this->carlos->id, ['nombre' => 'Cliente de Carlos']);
+        $inexistente = 999999;
+        $invalidos = ['nombre' => '', 'nit' => '1', 'telefono' => '1'];
+
+        foreach ([$ajeno->id, $inexistente] as $id) {
+            $this->actingAs($this->sergio)->get("/clientes/{$id}/edit")->assertNotFound();
+            $this->put("/clientes/{$id}", $invalidos)->assertNotFound();
+            $this->put("/clientes/{$id}", $this->datos(['nit' => 'CF', 'telefono' => '39998877']))->assertNotFound();
+            $this->patch("/clientes/{$id}/asignar", [])->assertNotFound();
+            $this->patch("/clientes/{$id}/asignar", ['vendedor_id' => $this->valeria->id])->assertNotFound();
+            $this->patch("/clientes/{$id}/liberar")->assertNotFound();
+        }
+
+        $this->assertSame('Cliente de Carlos', $ajeno->fresh()->nombre);
+        $this->assertSame($this->carlos->id, $ajeno->fresh()->vendedor_id);
+
+        // Con un cliente visible, los datos inválidos sí vuelven al formulario con errores.
+        $propio = $this->crearCliente($this->valeria->id);
+        $this->from(route('clientes.edit', $propio))->put(route('clientes.update', $propio), $invalidos)
+            ->assertRedirect(route('clientes.edit', $propio))
+            ->assertSessionHasErrors(['nit', 'telefono']);
+    }
+
+    public function test_las_demas_puertas_con_formrequest_rechazan_al_rol_antes_de_validar(): void
+    {
+        $producto = DB::table('productos')->insertGetId(['nombre' => 'Producto X', 'precio' => 10, 'created_at' => now(), 'updated_at' => now()]);
+
+        $this->actingAs($this->sergio)->put("/productos/{$producto}", ['precio' => 'abc'])->assertForbidden();
+        $this->put("/usuarios/{$this->valeria->id}", ['email' => 'no-es-correo'])->assertForbidden();
+        $this->patch("/productos/{$producto}/estado", ['activo' => 'x'])->assertForbidden();
+    }
+
     private function crearOportunidad(int $clienteId, int $vendedorId, string $etapa): int
     {
         return DB::table('oportunidades')->insertGetId([

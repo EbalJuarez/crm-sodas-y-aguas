@@ -25,4 +25,17 @@ class Cliente extends Model
     {
         return $this->belongsTo(User::class, 'vendedor_id');
     }
+
+    /**
+     * L5/S5: el administrador ve todos; un supervisor ve los disponibles y los de su equipo.
+     * Lo que no ve responde 404 (no 403), para no confirmar que existe.
+     */
+    public function esVisiblePara(User $usuario): bool
+    {
+        if ($usuario->esAdministrador() || $this->vendedor_id === null) {
+            return true;
+        }
+
+        return User::whereKey($this->vendedor_id)->where('supervisor_id', $usuario->id)->exists();
+    }
 }

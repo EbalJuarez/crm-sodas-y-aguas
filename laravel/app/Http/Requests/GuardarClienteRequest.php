@@ -11,8 +11,18 @@ use Illuminate\Validation\Validator;
 
 class GuardarClienteRequest extends FormRequest
 {
+    /**
+     * Se ejecuta antes de validar: un cliente de otro equipo responde 404 aunque los datos
+     * sean inválidos (si no, el 302 con errores confirmaría que existe: R2, S5).
+     */
     public function authorize(): bool
     {
+        $cliente = $this->route('cliente');
+
+        if ($cliente instanceof Cliente) {
+            abort_unless($cliente->esVisiblePara($this->user()), 404);
+        }
+
         return true;
     }
 

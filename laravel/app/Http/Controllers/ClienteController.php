@@ -210,14 +210,7 @@ class ClienteController extends Controller
 
     private function autorizarVisibilidad(User $usuario, Cliente $cliente): void
     {
-        if ($usuario->esAdministrador() || $cliente->vendedor_id === null) {
-            return;
-        }
-
-        abort_unless(
-            User::whereKey($cliente->vendedor_id)->where('supervisor_id', $usuario->id)->exists(),
-            404,
-        );
+        abort_unless($cliente->esVisiblePara($usuario), 404);
     }
 
     private function vendedoresVisibles(User $usuario)
