@@ -4,7 +4,17 @@
         {"entrada": "04521817K", "valido": true, "normalizado": "4521817K"},
         {"entrada": "cf", "valido": true, "normalizado": null},
         {"entrada": "4521817-1", "valido": false, "normalizado": null},
-        {"entrada": "", "valido": false, "normalizado": null}
+        {"entrada": "", "valido": false, "normalizado": null},
+        {"entrada": " c f ", "valido": true, "normalizado": null},
+        {"entrada": "CF", "valido": true, "normalizado": null},
+        {"entrada": "0004521817K", "valido": true, "normalizado": "4521817K"},
+        {"entrada": "4521817k", "valido": true, "normalizado": "4521817K"},
+        {"entrada": "1", "valido": false, "normalizado": null},
+        {"entrada": "19", "valido": true, "normalizado": "19"},
+        {"entrada": "123456789016", "valido": true, "normalizado": "123456789016"},
+        {"entrada": "1234567890120", "valido": false, "normalizado": null},
+        {"entrada": "4521817-K-", "valido": true, "normalizado": "4521817K"},
+        {"entrada": "4521817.K", "valido": false, "normalizado": null}
     ],
     "telefono": [
         {"entrada": "5021 2345", "valido": true, "normalizado": "50212345"},
