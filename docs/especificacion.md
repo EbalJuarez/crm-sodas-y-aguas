@@ -524,8 +524,7 @@ en `etapa`. Del mismo modo, `?estado=x` → 400 y `{ "completada": "x" }` → 42
 Ejemplos: `5021 2345` queda `50212345` (válido: 8 dígitos, el 502 es parte del número);
 `502 5512 3456` queda `55123456` (11 dígitos que empiezan con 502); `+502 5512 3456` queda `55123456`.
 
-Solo en el panel (catálogo): `productos.nombre` obligatorio, ≤ 120, único; `productos.precio` número
-> 0 con 2 decimales como máximo; `productos.unidades_por_caja` vacío o entero de 1 a 999.
+Solo en el panel (catálogo): `productos.nombre` obligatorio, ≤ 120, único; `productos.precio` número > 0 con 2 decimales como máximo; `productos.unidades_por_caja` vacío o entero de 1 a 999.
 
 ---
 
