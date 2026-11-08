@@ -11,7 +11,7 @@
 | Bloque | Responsable | Inicio | Fin |
 |--------|-------------|--------|-----|
 | 1 | Integrante A | _(fecha)_ | _(fecha)_ |
-| 2 | Integrante B | _(fecha)_ | _(fecha)_ |
+| 2 | Integrante B | _(fecha)_ | 2026-11-08 · **hecho** |
 | 3 | Integrante A | _(fecha)_ | _(fecha)_ |
 | 4 | Integrante B | _(fecha)_ | _(fecha)_ |
 | Cierre | A y B | _(fecha)_ | _(fecha)_ |
@@ -184,7 +184,13 @@ revisa `SHOW CREATE TABLE` de las 7 tablas; repite los inserts de L1.3 y RP5; re
 navegador; **lee el diff completo** (`git diff spec-v1..HEAD`). Anota lo encontrado en
 `docs/verificacion.md` (matriz) y hace el commit `docs: verificacion del bloque 1`.
 
-### Bloque 2 — Integrante B: A1, A2, L3, L4, F1
+### Bloque 2 — Integrante B: A1, A2, L3, L4, F1 — **HECHO** (2026-11-08)
+
+> Tareas 2.1–2.6 terminadas: `ab90dd6`, `3eddf1d`, `b5da01f`, `f63434a`, `f897d78`. Correcciones de
+> la auditoría: `bfcdee2`, `be50f6e`, `241d490`, `62b4f31`, `1fff582`, `1ddf305`, `ae9afaa`. Spec 1.2:
+> `563e6ce`. 88 pruebas en verde. Evidencia en `docs/verificacion.md` («Bloque 2»); entorno,
+> pendientes y trampas en `docs/traspaso.md` («Traspaso del bloque 2 al bloque 3»). El bloque llegó
+> antes en `e3273d5`, un commit sin prefijo que se descartó; `f897d78` usa `frontend:` en vez de `spa:`.
 
 | # | Requisito | Tarea | Terminado cuando | Prompt al agente | Commits |
 |---|-----------|-------|------------------|------------------|---------|

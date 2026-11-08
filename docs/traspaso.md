@@ -107,3 +107,81 @@ En el orden de la tabla del bloque 2 de `docs/plan.md`:
    integración, I1).
 
 Al terminar, el traspaso 2 → 3 lo hace el Integrante A: corre las pruebas de su bloque y lee el diff completo.
+
+---
+
+# Traspaso del bloque 2 al bloque 3
+
+> Del Integrante B al Integrante A · 2026-11-08 · rama `bloque-3/equipos-reportes-cartera`.
+> Fuentes: `CLAUDE.md`, `docs/especificacion.md` (spec-v1 + aclaraciones 1.1 y 1.2) y `docs/plan.md`.
+> La evidencia completa está en `docs/verificacion.md`, sección «Bloque 2». Aquí no hay contraseñas.
+
+## 1. Qué quedó hecho en el bloque 2
+
+| Tarea del plan | Estado | Commits |
+|----------------|--------|---------|
+| 2.1 Base de la API (Express 5, pool mysql2, CORS, errores JSON) | Hecho | `ab90dd6` |
+| 2.2 A1 Login JWT | Hecho; endurecido: sin cuerpo da 400, hash ficticio contra la enumeración por tiempo, `JWT_SECRET` ≥ 32 al arrancar | `3eddf1d`, `be50f6e` |
+| 2.3 A2 Middleware | Hecho. El middleware se escribió en `3eddf1d` **sin montarse**; ahora cubre todo `/api` salvo `POST /api/auth/login` | `3eddf1d`, `bfcdee2` |
+| 2.4 L3 Catálogo (con `unidades_por_caja`) | Hecho; precio máximo y un mensaje por campo | `b5da01f`, `1ddf305` |
+| 2.5 L4 Clientes y asignación, `Support/Nit.php`, `Support/Telefono.php`, `docs/casos-normalizacion.json` | Hecho. Correcciones: autorizar antes de validar (404), solo el administrador elimina, nombre obligatorio al editar, `lang/es`, mismo orden de bloqueos | `f63434a`, `241d490`, `62b4f31`, `1fff582`, `ae9afaa` |
+| 2.6 F1 SPA: sesión | Hecho; F1.4 comprobado contra la API real | `f897d78` |
+| Aclaraciones de la spec (versión 1.2, `spec-v1` no se mueve) | Login sin cuerpo = 400 y `{}` = 422; alcance del middleware; L4.18 | `563e6ce` |
+| Bitácora (casos 2–5) y evidencia del bloque 2 | Hecho | `9264b99`, `c0fdd7b` |
+
+`php artisan test`: **88 pruebas, 460 aserciones, todas en verde** (eran 50 al cerrar el bloque 1).
+
+**Sobre los commits:** el bloque 2 llegó primero en un commit local, `e3273d5` («Implementa catálogo,
+clientes y acceso API»), **sin prefijo y con todo el bloque en uno solo**. Se descartó al reiniciar la
+rama a `origin/feat/bloque-2-api-base`, y hoy no está en ninguna rama (solo en el reflog local). El
+mismo código está en `ab90dd6`…`f897d78`, con prefijo. `f897d78` usa `frontend:` en vez de `spa:`
+(plan, sección 4). Como no se reescribe el historial, queda así y se usa `spa:` de aquí en adelante.
+
+## 2. Cómo dejar el entorno listo (además de lo del traspaso 1 → 2)
+
+Versiones con las que se probó el bloque 2: PHP 8.4.27, Node 24.21, **MySQL 8.0.40 en lugar de la
+8.4 LTS** que pide el enunciado. Hay que repetir las pruebas y las cifras de control en MySQL 8.4
+antes de la entrega.
+
+1. **`laravel/.env`:** cambie `APP_LOCALE=en` por `APP_LOCALE=es` (ya está así en `.env.example`).
+   Sin eso, el panel muestra en inglés los mensajes de respaldo y la paginación. Las pruebas no
+   dependen de esto: `phpunit.xml` fija `APP_LOCALE=es`.
+2. **`api/.env` no existe en el repositorio** (y nunca debe entrar). Créelo desde el ejemplo:
+   `cd api`, `cp .env.example .env`, y complete `DB_USERNAME`, `DB_PASSWORD` y un **`JWT_SECRET` de al
+   menos 32 caracteres aleatorios** (por ejemplo, la salida de
+   `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`). Si falta o es corto, la
+   API no arranca y lo dice. Luego `npm install` y `npm start` (`node --env-file=.env`).
+3. **CORS:** `CORS_ORIGIN` debe coincidir **exactamente** con el origen de la SPA:
+   `http://127.0.0.1:5500`, **no** `http://localhost:5500`. Abra la SPA con Live Server desde
+   `127.0.0.1:5500`. Desde `localhost:5500` la preflight no recibe `Access-Control-Allow-Origin` y el
+   navegador bloquea la petición, aunque todo lo demás parezca bien (comprobado; ver `verificacion.md`, S6).
+4. **Semilla y pruebas:** `php artisan migrate:fresh --seeder=VerificacionSeeder` y `php artisan test`
+   (88 en verde).
+
+## 3. Lo que el bloque 3 debe respetar
+
+- **Nuevas rutas de la API:** se montan en `api/src/app.js` **después** de
+  `app.use('/api', autenticacion)` y **antes** de `notFoundHandler`, para que hereden el 401. El dueño
+  sale de `request.usuario.id`, nunca del cuerpo.
+- **Cuerpos:** use `exigirCuerpo` (`api/src/middleware/cuerpo.js`) en los `POST`/`PATCH` que exigen
+  cuerpo (sin cuerpo, 400). `PATCH /clientes/:id` con `{}` también es 400 (P-7), y eso lo decide la ruta.
+- **Orden de bloqueos:** primero la fila del vendedor en `users` (`SELECT … FOR UPDATE`), luego la del
+  cliente. Es el mismo orden que usa el panel en `asignar` y `liberar` desde `ae9afaa`. Con otro orden,
+  una toma por la API y un liberar en el panel pueden bloquearse mutuamente.
+- **NIT y teléfono en la API (3.3):** deben dar lo mismo que `laravel/app/Support/Nit.php` y
+  `Telefono.php`. Ojo: `Nit::normalizar()` devuelve `null` tanto para `CF` como para un NIT inválido,
+  así que primero se llama a `esValido()`. **`docs/casos-normalizacion.json` solo tiene 5 casos de
+  NIT:** antes de la prueba `node:test`, agregue ` c f `, `0004521817K`, `1`, 13 caracteres y `k`
+  minúscula.
+- **Visibilidad en el panel (L5):** use `Cliente::esVisiblePara($usuario)`. En un FormRequest sobre un
+  registro, la autorización va en `authorize()`, que corre antes de validar (bitácora, caso 3).
+
+## 4. Pendientes que se encontraron (no son de este bloque)
+
+- **`GET /clientes?q[]=x` y `?vendedor_id[]=4` responden 500** en el panel (comprobado el 2026-11-08).
+  `ClienteController::index` convierte a texto un arreglo. Corresponde a L7 (tarea 3.6).
+- **SPA:** tras un error de login el formulario se vuelve a dibujar y se pierde el correo escrito;
+  hay un `<main>` dentro de otro `<main>`; al recargar con un token guardado no se valida hasta la
+  primera petición protegida. Revisar en F2 o F6.
+- **Decisiones pendientes de 3.6** (del traspaso 1 → 2): verificación de correo, recuperación de
+  contraseña y el resto de vistas de Breeze en inglés.
