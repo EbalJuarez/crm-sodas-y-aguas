@@ -19,6 +19,9 @@
                         <x-nav-link :href="route('usuarios.index')" :active="request()->routeIs('usuarios.*')">
                             Cuentas
                         </x-nav-link>
+                        <x-nav-link :href="route('productos.index')" :active="request()->routeIs('productos.*')">
+                            Catálogo
+                        </x-nav-link>
                     @endif
                 </div>
             </div>
@@ -78,6 +81,9 @@
             @if (Auth::user()->esAdministrador())
                 <x-responsive-nav-link :href="route('usuarios.index')" :active="request()->routeIs('usuarios.*')">
                     Cuentas
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('productos.index')" :active="request()->routeIs('productos.*')">
+                    Catálogo
                 </x-responsive-nav-link>
             @endif
         </div>
