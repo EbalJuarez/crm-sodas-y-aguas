@@ -1,0 +1,81 @@
+:root {
+    --agua-profunda: #12364a;
+    --agua: #1e7a8a;
+    --agua-clara: #dff3f4;
+    --arena: #f6f3ed;
+    --texto: #19303b;
+}
+
+body {
+    min-width: 320px;
+    background: var(--arena);
+    color: var(--texto);
+}
+
+.app-shell {
+    min-height: 100vh;
+}
+
+.login-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 12% 20%, rgba(255, 255, 255, .75), transparent 28rem),
+        linear-gradient(135deg, var(--agua-clara), var(--arena) 58%);
+}
+
+.login-card {
+    max-width: 28rem;
+    border: 0;
+    border-top: .35rem solid var(--agua);
+    box-shadow: 0 1rem 3rem rgba(18, 54, 74, .12);
+}
+
+.brand-mark {
+    display: inline-grid;
+    width: 3rem;
+    height: 3rem;
+    place-items: center;
+    border-radius: 1rem 1rem 1rem .25rem;
+    background: var(--agua-profunda);
+    color: white;
+    font-weight: 700;
+    letter-spacing: .08em;
+}
+
+.brand-name {
+    color: var(--agua-profunda);
+    letter-spacing: -.02em;
+}
+
+.btn-agua {
+    background: var(--agua-profunda);
+    border-color: var(--agua-profunda);
+    color: white;
+}
+
+.btn-agua:hover,
+.btn-agua:focus-visible {
+    background: var(--agua);
+    border-color: var(--agua);
+    color: white;
+}
+
+.home-header {
+    background: var(--agua-profunda);
+    color: white;
+}
+
+.home-panel {
+    border: 0;
+    box-shadow: 0 .75rem 2rem rgba(18, 54, 74, .1);
+}
+
+@media (max-width: 575.98px) {
+    .login-page {
+        padding: 1rem;
+    }
+
+    .login-card {
+        width: 100%;
+    }
+}
