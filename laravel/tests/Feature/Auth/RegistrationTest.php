@@ -2,30 +2,36 @@
 
 namespace Tests\Feature\Auth;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
+/**
+ * L2.1: no hay registro público. Las cuentas las crea el administrador en el panel.
+ */
 class RegistrationTest extends TestCase
 {
-    use RefreshDatabase;
-
-    public function test_registration_screen_can_be_rendered(): void
+    public function test_la_pagina_de_registro_no_existe(): void
     {
-        $response = $this->get('/register');
-
-        $response->assertStatus(200);
+        $this->get('/register')->assertNotFound();
     }
 
-    public function test_new_users_can_register(): void
+    public function test_no_se_puede_enviar_un_registro(): void
     {
-        $response = $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->post('/register', [
+            'name' => 'Intruso',
+            'email' => 'intruso@crm.test',
             'password' => 'password',
             'password_confirmation' => 'password',
-        ]);
+        ])->assertNotFound();
+    }
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+    public function test_no_existe_la_ruta_con_nombre_register(): void
+    {
+        $this->assertFalse(Route::has('register'));
+    }
+
+    public function test_el_login_no_enlaza_a_un_registro(): void
+    {
+        $this->get('/login')->assertOk()->assertDontSee('/register');
     }
 }
