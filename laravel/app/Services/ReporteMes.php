@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Cliente;
 use App\Models\User;
 use App\Support\ZonaGuatemala;
 use Illuminate\Database\Query\Builder;
@@ -49,13 +50,38 @@ final class ReporteMes
      */
     public function vendedoresVisibles(User $usuario): Collection
     {
-        $consulta = User::query()->where('rol', 'vendedor')->orderBy('name')->orderBy('id');
+        return User::query()->equipoDe($usuario)->orderBy('name')->orderBy('id')
+            ->get(['id', 'name', 'activo']);
+    }
 
-        if (! $usuario->esAdministrador()) {
-            $consulta->where('supervisor_id', $usuario->id);
-        }
+    /**
+     * L5 «Mi equipo»: por vendedor visible, su cartera actual (x de 10) y sus ventas del mes.
+     * Un vendedor desactivado aparece con su cartera intacta (D4) y marcado.
+     *
+     * @return list<array{id: int, nombre: string, activo: bool, cartera: int, maximo: int,
+     *                    ventas: int, total: string, pronostico: string}>
+     */
+    public function equipo(User $usuario, string $mes): array
+    {
+        $vendedores = $this->vendedoresVisibles($usuario);
+        $ids = $vendedores->pluck('id')->all();
+        $resumen = $this->resumenPorVendedor($ids, $mes);
 
-        return $consulta->get(['id', 'name', 'activo']);
+        $carteras = $ids === [] ? [] : DB::table('clientes')
+            ->whereIn('vendedor_id', $ids)
+            ->groupBy('vendedor_id')
+            ->select('vendedor_id')->selectRaw('COUNT(*) AS clientes')
+            ->pluck('clientes', 'vendedor_id')
+            ->all();
+
+        return $vendedores->map(fn (User $vendedor) => [
+            'id' => $vendedor->id,
+            'nombre' => $vendedor->name,
+            'activo' => (bool) $vendedor->activo,
+            'cartera' => (int) ($carteras[$vendedor->id] ?? 0),
+            'maximo' => Cliente::MAXIMO_CARTERA,
+            ...$resumen[$vendedor->id],
+        ])->values()->all();
     }
 
     /**

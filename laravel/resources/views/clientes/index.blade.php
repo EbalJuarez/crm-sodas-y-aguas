@@ -75,7 +75,7 @@
                                         @csrf
                                         @method('PATCH')
                                         <select name="vendedor_id" aria-label="Vendedor para {{ $cliente->nombre }}" class="border-gray-300 rounded-md text-xs">
-                                            @foreach ($vendedores->where('activo', true) as $vendedor)
+                                            @foreach ($asignables as $vendedor)
                                                 <option value="{{ $vendedor->id }}" @selected($cliente->vendedor_id === $vendedor->id)>{{ $vendedor->name }}</option>
                                             @endforeach
                                         </select>

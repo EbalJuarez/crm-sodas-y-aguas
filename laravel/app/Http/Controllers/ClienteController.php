@@ -28,8 +28,7 @@ class ClienteController extends Controller
         }
 
         $usuario = $request->user();
-        $consulta = Cliente::query()->with('vendedor')->orderBy('nombre');
-        $this->aplicarVisibilidad($consulta, $usuario);
+        $consulta = Cliente::query()->visiblesPara($usuario)->with('vendedor')->orderBy('nombre');
 
         if ($request->filled('q')) {
             $busqueda = trim((string) $request->query('q'));
@@ -53,7 +52,8 @@ class ClienteController extends Controller
 
         return view('clientes.index', [
             'clientes' => $consulta->paginate(20)->withQueryString(),
-            'vendedores' => $this->vendedoresVisibles($usuario),
+            'vendedores' => User::query()->equipoDe($usuario)->orderBy('name')->get(['id', 'name', 'activo']),
+            'asignables' => User::query()->asignablesPor($usuario)->orderBy('name')->get(['id', 'name']),
             'filtros' => $request->only(['q', 'vendedor_id']),
         ]);
     }
@@ -77,16 +77,16 @@ class ClienteController extends Controller
         return redirect()->route('clientes.index')->with('status', 'Cliente creado y disponible.');
     }
 
-    public function edit(Request $request, Cliente $cliente): View
-    {
-        $this->autorizarVisibilidad($request->user(), $cliente);
+    // edit, update, asignar y liberar: la ruta exige `can:gestionar,cliente` (ClientePolicy),
+    // que responde 404 a un cliente de otro equipo antes de llegar aquí y antes de validar.
 
+    public function edit(Cliente $cliente): View
+    {
         return view('clientes.edit', ['cliente' => $cliente]);
     }
 
     public function update(GuardarClienteRequest $request, Cliente $cliente): RedirectResponse
     {
-        $this->autorizarVisibilidad($request->user(), $cliente);
         $datos = $request->validated();
 
         try {
@@ -100,9 +100,13 @@ class ClienteController extends Controller
         return redirect()->route('clientes.index')->with('status', 'Cliente actualizado.');
     }
 
+    /**
+     * Asignar (cliente disponible) o reasignar (cliente con vendedor). D2: las oportunidades
+     * ABIERTAS pasan al vendedor nuevo en la misma transacción; las cerradas (ganadas y perdidas)
+     * se quedan con su vendedor original, y ninguna actividad se modifica.
+     */
     public function asignar(Request $request, Cliente $cliente): RedirectResponse
     {
-        $this->autorizarVisibilidad($request->user(), $cliente);
         $datos = $request->validate(
             ['vendedor_id' => ['required', 'integer']],
             [
@@ -113,25 +117,36 @@ class ClienteController extends Controller
 
         DB::transaction(function () use ($request, $cliente, $datos): void {
             // Orden de bloqueos (igual en liberar y en la API): primero users, luego clientes.
+            // Solo vendedores ACTIVOS de su equipo (el administrador: de toda la empresa). Un id de
+            // otro equipo, desactivado o que no es vendedor no encuentra fila: mensaje junto al campo.
             $usuario = $request->user();
-            $vendedor = User::whereKey($datos['vendedor_id'])->lockForUpdate()->first();
+            $vendedor = User::query()->asignablesPor($usuario)
+                ->whereKey($datos['vendedor_id'])->lockForUpdate()->first();
 
-            if (! $this->puedeAsignarA($usuario, $vendedor)) {
+            if ($vendedor === null) {
                 throw ValidationException::withMessages(['vendedor_id' => self::MENSAJE_VENDEDOR_INVALIDO]);
             }
 
-            $bloqueado = Cliente::whereKey($cliente->id)->lockForUpdate()->firstOrFail();
+            // Se vuelve a comprobar la visibilidad con el cliente ya bloqueado: si el administrador
+            // lo pasó a otro equipo después del 404 de la ruta, ya no es de este supervisor.
+            $bloqueado = Cliente::query()->visiblesPara($usuario)
+                ->whereKey($cliente->id)->lockForUpdate()->first();
+            abort_if($bloqueado === null, 404);
+
             if ($bloqueado->vendedor_id === $vendedor->id) {
                 return;
             }
 
-            if (Cliente::where('vendedor_id', $vendedor->id)->count() >= 10) {
+            // R3: se cuenta con la fila del vendedor ya bloqueada (otra asignación, una toma o un
+            // alta por la API esperan aquí).
+            if (Cliente::where('vendedor_id', $vendedor->id)->count() >= Cliente::MAXIMO_CARTERA) {
                 throw ValidationException::withMessages(['vendedor_id' => self::MENSAJE_CARTERA_LLENA]);
             }
 
             $bloqueado->vendedor_id = $vendedor->id;
             $bloqueado->save();
 
+            // D2: solo las abiertas cambian de dueño; las cerradas conservan la venta (y el reporte).
             DB::table('oportunidades')
                 ->where('cliente_id', $bloqueado->id)
                 ->whereNotIn('etapa', ['ganada', 'perdida'])
@@ -141,22 +156,27 @@ class ClienteController extends Controller
         return redirect()->route('clientes.index')->with('status', 'Cliente asignado o reasignado correctamente.');
     }
 
+    /**
+     * D3: no se libera un cliente con oportunidades abiertas (mensaje del panel de D3). Con solo
+     * cerradas sí se libera; las cerradas siguen con su vendedor original.
+     */
     public function liberar(Request $request, Cliente $cliente): RedirectResponse
     {
-        $this->autorizarVisibilidad($request->user(), $cliente);
-
-        DB::transaction(function () use ($cliente): void {
+        DB::transaction(function () use ($request, $cliente): void {
             // Mismo orden de bloqueos que asignar (y que la API al tomar o crear clientes):
             // primero la fila del vendedor en users, luego la del cliente. Con órdenes distintos,
             // un asignar y un liberar simultáneos podían bloquearse mutuamente (deadlock).
-            $vendedorId = Cliente::whereKey($cliente->id)->value('vendedor_id');
+            $usuario = $request->user();
+            $vendedorId = Cliente::query()->visiblesPara($usuario)->whereKey($cliente->id)->value('vendedor_id');
             $vendedorId = $vendedorId === null ? null : (int) $vendedorId;
 
             if ($vendedorId !== null) {
                 User::whereKey($vendedorId)->lockForUpdate()->first();
             }
 
-            $bloqueado = Cliente::whereKey($cliente->id)->lockForUpdate()->firstOrFail();
+            $bloqueado = Cliente::query()->visiblesPara($usuario)
+                ->whereKey($cliente->id)->lockForUpdate()->first();
+            abort_if($bloqueado === null, 404);
 
             // Si entre la lectura y el bloqueo otro proceso lo reasignó, no se libera a ciegas.
             if ($bloqueado->vendedor_id !== $vendedorId) {
@@ -208,42 +228,6 @@ class ClienteController extends Controller
         $cliente->correo = $datos['correo'] ?? null;
         // CF se guarda como NULL (R4).
         $cliente->nit = $datos['nit'] === 'CF' ? null : $datos['nit'];
-    }
-
-    private function aplicarVisibilidad($consulta, User $usuario): void
-    {
-        if ($usuario->esAdministrador()) {
-            return;
-        }
-
-        $consulta->where(function ($query) use ($usuario) {
-            $query->whereNull('vendedor_id')
-                ->orWhereHas('vendedor', fn ($vendedor) => $vendedor->where('supervisor_id', $usuario->id));
-        });
-    }
-
-    private function autorizarVisibilidad(User $usuario, Cliente $cliente): void
-    {
-        abort_unless($cliente->esVisiblePara($usuario), 404);
-    }
-
-    private function vendedoresVisibles(User $usuario)
-    {
-        $consulta = User::query()->where('rol', 'vendedor')->orderBy('name');
-
-        if (! $usuario->esAdministrador()) {
-            $consulta->where('supervisor_id', $usuario->id);
-        }
-
-        return $consulta->get(['id', 'name', 'activo']);
-    }
-
-    private function puedeAsignarA(User $usuario, ?User $vendedor): bool
-    {
-        return $vendedor !== null
-            && $vendedor->rol === 'vendedor'
-            && $vendedor->activo
-            && ($usuario->esAdministrador() || $vendedor->supervisor_id === $usuario->id);
     }
 
     private function lanzarErrorDuplicado(QueryException $exception, array $datos): void

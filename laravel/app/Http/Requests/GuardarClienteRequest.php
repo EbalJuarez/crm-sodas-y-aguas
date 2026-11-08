@@ -7,6 +7,7 @@ use App\Support\Correo;
 use App\Support\Nit;
 use App\Support\Telefono;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class GuardarClienteRequest extends FormRequest
@@ -19,8 +20,10 @@ class GuardarClienteRequest extends FormRequest
     {
         $cliente = $this->route('cliente');
 
+        // La ruta ya lo exige con `can:gestionar,cliente`; se repite con la MISMA policy (404 por
+        // denyAsNotFound) por si este FormRequest se usa en otra ruta.
         if ($cliente instanceof Cliente) {
-            abort_unless($cliente->esVisiblePara($this->user()), 404);
+            Gate::authorize('gestionar', $cliente);
         }
 
         return true;

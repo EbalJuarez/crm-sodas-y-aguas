@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -55,6 +56,29 @@ class User extends Authenticatable
     public function clientes(): HasMany
     {
         return $this->hasMany(Cliente::class, 'vendedor_id');
+    }
+
+    /**
+     * L5 — vendedores que ve $usuario: el administrador, todos; un supervisor, su equipo
+     * (supervisor_id = él), incluidos los desactivados (D4: conservan su cartera); nadie más, ninguno.
+     */
+    public function scopeEquipoDe(Builder $consulta, User $usuario): void
+    {
+        $consulta->where('rol', 'vendedor');
+
+        if ($usuario->esAdministrador()) {
+            return;
+        }
+
+        $usuario->esSupervisor()
+            ? $consulta->where('supervisor_id', $usuario->id)
+            : $consulta->whereKey([]);
+    }
+
+    /** L5, L4.12, D4 — a quién puede asignar clientes $usuario: vendedores ACTIVOS de lo que ve. */
+    public function scopeAsignablesPor(Builder $consulta, User $usuario): void
+    {
+        $consulta->equipoDe($usuario)->where('activo', true);
     }
 
     public function esAdministrador(): bool
