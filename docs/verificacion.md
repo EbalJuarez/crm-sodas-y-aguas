@@ -43,6 +43,40 @@
 | F1.5 | SPA: la única clave en `localStorage` es `crm_agua_token` | ✔ |
 | F6.3 (adelanto) | SPA con la API apagada: «No se pudo conectar con la API. Compruebe que esté en marcha.» | ✔ |
 | F6.5 (solo login e inicio) | SPA a 375 px: `scrollWidth` = 375 en todas las pantallas de F1 | ✔ |
+| A3.1 | API real: Valeria `GET /clientes` da sus 3; `?q=Xela` solo Ferretería Xela; `?q=4521817` Comercial El Quetzal («Bloque 3», A3) | ✔ |
+| A3.2 | API real: `GET /clientes/disponibles` da los 6, cada uno solo `{ id, nombre }` | ✔ |
+| A3.3 | API real: `GET` y `PATCH` de un cliente de Diego y de un id inexistente dan el mismo 404 `{"error":"No se encontró el cliente."}`, también con cuerpo inválido o `{}` (404 antes de validar) | ✔ |
+| A3.4 | API real: `POST /clientes` válido da 201 con la forma `Cliente` (`vendedor_id` del cuerpo ignorado) | ✔ |
+| A3.5 | API real: NIT `452 1817-k` y teléfono `+502 5555-1234` dan 409 | ✔ |
+| A3.6 | API real: `{}` y datos inválidos dan 422 con un mensaje por campo (textos de 3.4) | ✔ |
+| A3.7 | API real: Carlos (9 de 10) crea un cliente (201) y luego tomar y crear dan 409 «Su cartera ya tiene 10 clientes, el máximo permitido.» | ✔ |
+| A3.8 | **Parcial.** `scripts/concurrencia.mjs` (a): 10 tomas simultáneas del mismo disponible entre Valeria, Diego y Carlos dan 1×200 y 9×409. **No** se probó con los 10 vendedores de `ConcurrenciaSeeder`: esa semilla (tarea 3.4) todavía no existe | Parcial |
+| A3.9 | **Pendiente.** No se probaron dos tomas y un alta simultáneas de Carlos. Lo más cercano: (b) 5 tomas simultáneas de Carlos dan 1×200 y 4×409 | Pendiente |
+| A3.10 | API real: tomar un cliente de Diego da 409; un id inexistente, 404 | ✔ |
+| A3.11 | API real: Comercial El Quetzal y María Coyoy con la forma `Cliente`; María Coyoy con `"nit":"CF"` y `"correo":null` | ✔ |
+| A3.12–A3.17 | API real: cada caso con el código y el cuerpo esperados (ver la salida de A3); A3.13 comprobado además con SQL directo: `nit` queda NULL | ✔ |
+| A3.18 | API real: `?q=4521817-k` y `?q=452 1817K` dan Comercial El Quetzal; también desde la SPA | ✔ |
+| A4.1–A4.13 | API real: secuencia de A4 («Bloque 3», A4); A4.13 deja el historial igual (49 antes y después) | ✔ |
+| A4.14 | `scripts/concurrencia.mjs` (d): dos `PATCH /etapa` simultáneos dan 1×200 y 1×409; el historial queda con 2 registros | ✔ |
+| A4.15–A4.22 | API real: secuencia de A4; A4.10 deja el historial igual (53 antes y después); A4.21 da 204 sin cuerpo | ✔ |
+| RP1–RP4 | API real: Gaseosa lata 355 ml (caja 24) creada con el modelo del panel (`Producto::create`, como el formulario del catálogo): 30 → 422, 48 → 201 con la copia `unidades_por_caja: 24`, `PATCH` 36 → 422, 72 → 200; con el catálogo en 12, la línea vieja rechaza 60 y una nueva lo acepta. **No** con `SectorSeeder` (todavía vacío) | ✔ |
+| RP6 | API real: con solo `VerificacionSeeder`, A4.4 da 201; las cifras de control con la semilla sola no cambian (abajo) | ✔ |
+| L5.1 | `EquiposTest`: Sergio sobre Librería Cantel (Carlos) y Hotel Los Pinos (Iván) recibe 404 en editar, actualizar (válido e inválido), asignar y liberar; el cliente no cambia | ✔ |
+| L5.2 | `EquiposTest`: Sergio no asigna a Carlos, Iván, Sandra ni Alicia (mensaje junto a `vendedor_id`); sí a Valeria | ✔ |
+| L5.3 | `EquiposTest` y consulta al servicio: «Mi equipo» de Sergio, octubre: Valeria 3 de 10, 2 ventas, 9250.00; Diego 2 de 10, 1 venta, 6000.00 | ✔ |
+| L5.4 | `EquiposTest`: Sergio no ve a Carlos ni a Iván en clientes, pedidos por cerrar ni «Mi equipo», ni filtrando por el id de Carlos | ✔ |
+| L6.1–L6.4 | `ReporteMesTest`: 11 oportunidades para Alicia, 9 para Sergio, filtros, solo lectura (POST 405, PATCH 404) y *Equipo para sucursal* con cierre 31/10/2026 21:30 | ✔ |
+| L6.5–L6.7 | `ReporteMesTest` y consulta a `ReporteMes` sobre `crm_agua`: todas las cifras de control coinciden (abajo) | ✔ |
+| L7.1 | **Parcial.** Clientes, catálogo, cuentas y el selector de mes: mensajes en español junto al campo (`ClientesTest`, `ReporteMesTest`, `EquiposTest`). Faltan las vistas de Breeze (perfil, recuperación, verificación), pendientes de decidir | Parcial |
+| L7.2 | **Parcial.** NIT (15 casos), teléfono (22) y correo (27) dan lo mismo en las dos puertas: `ClientesTest` y `npm test` leen el mismo `docs/casos-normalizacion.json`. Duplicados y cartera llena se rechazan en las dos, con el mismo texto para los duplicados, pero no hay una prueba cruzada que envíe los mismos datos a las dos puertas | Parcial |
+| S3 | API real: `?q=' OR 1=1 -- ` da 200 `[]`; `?q=%` y `?q=_` se buscan como texto (API y `ClientesTest` del panel); `?q[]=x` da 400 en las dos puertas | ✔ |
+| S5 | API: A3.3 y A4.15 (404); panel: `EquiposTest` (Sergio contra clientes de Sandra) | ✔ |
+| S7 (SPA) | SPA en Edge sin ventana: el cliente `<img src=x onerror=alert(1)>` se ve como texto, no se crea ningún `<img>` y no se llama a `alert` | ✔ |
+| S8 | **Parcial.** A3.8 (variante sin `ConcurrenciaSeeder`), A4.14 y 5 altas con el mismo teléfono (1×201, 4×409) ✔. **No** se probaron A3.9 ni dos altas con el mismo NIT | Parcial |
+| F1.4 | SPA real (F2): un token alterado al recargar y una cuenta desactivada a media sesión vuelven al login con «Su sesión venció o su cuenta ya no tiene acceso…»; el 401 del login no cuenta como sesión vencida | ✔ |
+| F2.1–F2.5 | SPA en Edge sin ventana a 375 px contra la API real (salida de F2 abajo) | ✔ |
+| F2 (I2) | **Pendiente.** No se probó que un cliente asignado en el panel aparezca en la SPA (hito I2 del plan) | Pendiente |
+| F6.2, F6.3, F6.5 (vistas de F2) | SPA: indicador de carga visible durante una petición; con la API apagada, mensaje con «Reintentar»; `scrollWidth ≤ innerWidth` a 375 px en login, cartera, alta con errores y disponibles | ✔ |
 
 ## Pruebas de seguridad (S1–S8), incluidas las de peticiones simultáneas
 
@@ -522,6 +556,515 @@ Registration (Tests\Feature\Auth\Registration)
  ✔ El login no enlaza a un registro
 
 OK (88 tests, 460 assertions)
+```
+
+## Bloque 3 (A3, A4, L5, L6, L7, F2)
+
+Evidencia obtenida el 2026-11-08 sobre el commit `6a0b42a` (bloque 3: `7dbbf5f`, `e3d89a5`, `fe36cd2`,
+`c9e31bc`, `c73747a`, `510138c`, `c7869d3` y `6a0b42a`), con **MySQL 8.0.40** (falta repetirla en
+MySQL 8.4 antes de la entrega). La base se recargó con
+`php artisan migrate:fresh --seeder=VerificacionSeeder` antes de cada bloque de pruebas y al terminar.
+
+Cómo se obtuvo:
+
+- **API real**, levantada desde `api/` con `node src/server.js` y las variables en el entorno del
+  proceso (`DB_*` de `laravel/.env`, `JWT_SECRET` aleatorio de 64 caracteres, `JWT_EXPIRES_IN=8h`,
+  `CORS_ORIGIN=http://127.0.0.1:5500`); no se creó `api/.env`. Peticiones con `curl.exe` desde
+  PowerShell; las respuestas largas se recortan con «…» en la salida.
+- **Concurrencia:** `node scripts/concurrencia.mjs` desde `api/`, con la contraseña pública en
+  `CLAVE_SEMILLA` (no está escrita en el script).
+- **Panel:** solo con pruebas automáticas (`vendor/bin/phpunit --testdox`) y consultas al servicio
+  `ReporteMes`; no se recorrió el panel en un navegador en este bloque.
+- **SPA:** servida en `http://127.0.0.1:5500` (servidor estático de prueba, no Live Server) y
+  manejada con Edge sin ventana (CDP) a 375 px, contra la API real.
+
+**No probado en este bloque** (también en la matriz): A3.8 con `ConcurrenciaSeeder` (la semilla no
+existe todavía), A3.9, dos altas simultáneas con el mismo NIT (S8), el hito I2 (cliente asignado en
+el panel que aparece en la SPA), la tabla cruzada de L7.2, y todo en MySQL 8.4.
+
+### Concurrencia (`node scripts/concurrencia.mjs`)
+
+(b) se ejecuta antes que (a): si Carlos ganara la toma de (a), llegaría a 10 y (b) ya no podría dar
+ningún 200.
+
+```
+Carlos tiene 9 de 10; hay 6 clientes disponibles.
+
+(b) 5 tomas simultáneas de clientes distintos por Carlos (9 de 10)
+  obtenido: {"200":1,"409":4}  esperado: {"200":1,"409":4}  → OK
+    Carlos   200  Agencia Cuatro Caminos (id 16)
+    Carlos   409  Su cartera ya tiene 10 clientes, el máximo permitido.
+    Carlos   409  Su cartera ya tiene 10 clientes, el máximo permitido.
+    Carlos   409  Su cartera ya tiene 10 clientes, el máximo permitido.
+    Carlos   409  Su cartera ya tiene 10 clientes, el máximo permitido.
+
+(a) 10 tomas simultáneas de «Café Zunil» entre Valeria, Diego y Carlos
+  obtenido: {"200":1,"409":9}  esperado: {"200":1,"409":9}  → OK
+    Valeria  200  Café Zunil (id 17)
+    Diego    409  Este cliente ya no está disponible.
+    Carlos   409  Su cartera ya tiene 10 clientes, el máximo permitido.
+    Valeria  409  Este cliente ya no está disponible.
+    Diego    409  Este cliente ya no está disponible.
+    Carlos   409  Su cartera ya tiene 10 clientes, el máximo permitido.
+    Valeria  409  Este cliente ya no está disponible.
+    Diego    409  Este cliente ya no está disponible.
+    Carlos   409  Su cartera ya tiene 10 clientes, el máximo permitido.
+    Valeria  409  Este cliente ya no está disponible.
+
+(c) 5 altas simultáneas con el teléfono 96470167
+  obtenido: {"201":1,"409":4}  esperado: {"201":1,"409":4}  → OK
+    Valeria  201  Prueba de concurrencia 1 (id 22)
+    Valeria  409  Ya existe un cliente con ese teléfono.
+    Valeria  409  Ya existe un cliente con ese teléfono.
+    Valeria  409  Ya existe un cliente con ese teléfono.
+    Valeria  409  Ya existe un cliente con ese teléfono.
+
+(d) 2 cambios de etapa simultáneos de «Prueba de concurrencia de etapa 1794178223958»
+  obtenido: {"200":1,"409":1}  esperado: {"200":1,"409":1}  → OK
+    Valeria  200  etapa calificado
+    Valeria  409  Ese cambio de etapa no está permitido.
+  historial (2 registros; se esperan 2):
+    null       → prospecto  Valeria López  2026-11-08T22:50:23.000Z
+    prospecto  → calificado Valeria López  2026-11-08T22:50:23.000Z
+
+Todas las pruebas dieron lo esperado.
+Para restaurar la base (desde laravel/): php artisan migrate:fresh --seeder=VerificacionSeeder
+```
+
+### A3 — Clientes y cartera (API real, `curl.exe`)
+
+```
+A2.1 sin token                                             401  {"error":"No autorizado."}
+A3.1 GET /clientes                                         200  [{"id":1,"nombre":"Comercial El Quetzal","nit":"4521817K","telefono":"55551234","correo":"compras@elquetzal.test"},{"id":2,"nombre":"Ferretería Xela","nit":"98765434","telefono":"77612345","correo":null},{"id":3,"nombre":"María Coyoy","nit":"CF","telefono":"41234567","correo":null}]
+A3.1 ?q=Xela                                               200  [{"id":2,"nombre":"Ferretería Xela","nit":"98765434","telefono":"77612345","correo":null}]
+A3.1 ?q=4521817                                            200  [{"id":1,"nombre":"Comercial El Quetzal","nit":"4521817K","telefono":"55551234","correo":"compras@elquetzal.test"}]
+A3.18 ?q=4521817-k                                         200  [{"id":1,"nombre":"Comercial El Quetzal","nit":"4521817K","telefono":"55551234","correo":"compras@elquetzal.test"}]
+A3.18 ?q=452 1817K                                         200  [{"id":1,"nombre":"Comercial El Quetzal","nit":"4521817K","telefono":"55551234","correo":"compras@elquetzal.test"}]
+S3 ?q=' OR 1=1 --                                          200  []
+?q=% (literal)                                             200  []
+?q=_ (literal)                                             200  []
+?q=a&q=b (arreglo)                                         400  {"error":"El parámetro q debe ser un solo texto."}
+?q[]=x (arreglo)                                           400  {"error":"El parámetro q debe ser un solo texto."}
+A3.2 disponibles                                           200  [{"id":16,"nombre":"Agencia Cuatro Caminos"},{"id":17,"nombre":"Café Zunil"},{"id":18,"nombre":"Clínica San Rafael"},{"id":19,"nombre":"Constructora Altiplano"},{"id":20,"nombre":"Escuela Futuro"},{"id":21,"nombre":"Gimnasio Fuerza"}]
+A3.3 GET de Diego                                          404  {"error":"No se encontró el cliente."}
+A3.3 GET inexistente                                       404  {"error":"No se encontró el cliente."}
+A3.3 PATCH de Diego                                        404  {"error":"No se encontró el cliente."}
+A3.3 PATCH inexistente                                     404  {"error":"No se encontró el cliente."}
+PATCH de Diego con cuerpo invalido (404 antes)             404  {"error":"No se encontró el cliente."}
+PATCH de Diego con {} (404 antes)                          404  {"error":"No se encontró el cliente."}
+GET /clientes/abc                                          400  {"error":"El identificador del cliente no es válido."}
+A3.11 Comercial El Quetzal                                 200  {"id":1,"nombre":"Comercial El Quetzal","nit":"4521817K","telefono":"55551234","correo":"compras@elquetzal.test"}
+A3.11 María Coyoy                                          200  {"id":3,"nombre":"María Coyoy","nit":"CF","telefono":"41234567","correo":null}
+A3.12 telefono 7761-2399                                   200  {"id":2,"nombre":"Ferretería Xela","nit":"98765434","telefono":"77612399","correo":null}
+A3.13 nit cf                                               200  {"id":2,"nombre":"Ferretería Xela","nit":"CF","telefono":"77612399","correo":null}
+A3.14 telefono de Farmacia                                 409  {"error":"Ya existe un cliente con ese teléfono."}
+A3.14 nit propio                                           200  {"id":2,"nombre":"Ferretería Xela","nit":"98765434","telefono":"77612399","correo":null}
+A3.14 nit propio otra vez (no choca)                       200  {"id":2,"nombre":"Ferretería Xela","nit":"98765434","telefono":"77612399","correo":null}
+A3.15 nit 4521817-1                                        422  {"errores":{"nit":"Escriba un NIT válido (con su dígito verificador) o CF."}}
+A3.15 nombre espacios                                      422  {"errores":{"nombre":"Escriba el nombre del cliente."}}
+A3.16 {}                                                   400  {"error":"Envíe al menos uno de estos campos: nombre, nit, telefono, correo."}
+A3.16 telefno                                              400  {"error":"Envíe al menos uno de estos campos: nombre, nit, telefono, correo."}
+PATCH arreglo                                              400  {"error":"Envíe al menos uno de estos campos: nombre, nit, telefono, correo."}
+PATCH sin cuerpo                                           400  {"error":"Falta el cuerpo de la petición. Envíelo en formato JSON."}
+PATCH JSON roto                                            400  {"error":"El cuerpo JSON no tiene un formato válido."}
+A3.17 nombre + vendedor_id                                 200  {"id":2,"nombre":"Ferretería Xela Centro","nit":"98765434","telefono":"77612399","correo":null}
+A3.17 sigue en su cartera                                  200  {"id":2,"nombre":"Ferretería Xela Centro","nit":"98765434","telefono":"77612399","correo":null}
+PATCH correo null                                          200  {"id":1,"nombre":"Comercial El Quetzal","nit":"4521817K","telefono":"55551234","correo":null}
+PATCH correo invalido                                      422  {"errores":{"correo":"Escriba un correo válido."}}
+A3.4 POST valido                                           201  {"id":22,"nombre":"Tienda Nueva","nit":"19","telefono":"22334455","correo":"tienda@nueva.test"}
+A3.5 POST nit 452 1817-k                                   409  {"error":"Ya existe un cliente con ese NIT."}
+A3.5 POST telefono +502 5555-1234                          409  {"error":"Ya existe un cliente con ese teléfono."}
+A3.6 POST {}                                               422  {"errores":{"nombre":"Escriba el nombre del cliente.","nit":"Escriba un NIT válido (con su dígito verificador) o CF.","telefono":"Escriba un teléfono de Guatemala de 8 dígitos."}}
+A3.6 POST invalidos                                        422  {"errores":{"nombre":"Escriba el nombre del cliente.","nit":"Escriba un NIT válido (con su dígito verificador) o CF.","telefono":"Escriba un teléfono de Guatemala de 8 dígitos.","correo":"Escriba un correo válido."}}
+POST tipos raros                                           422  {"errores":{"nombre":"Escriba el nombre del cliente.","nit":"Escriba un NIT válido (con su dígito verificador) o CF.","telefono":"Escriba un teléfono de Guatemala de 8 dígitos."}}
+POST sin cuerpo                                            400  {"error":"Falta el cuerpo de la petición. Envíelo en formato JSON."}
+POST arreglo                                               400  {"error":"El cuerpo debe ser un objeto JSON."}
+A3.10 tomar ya asignado (de Diego)                         409  {"error":"Este cliente ya no está disponible."}
+A3.10 tomar inexistente                                    404  {"error":"No se encontró el cliente."}
+tomar uno propio                                           409  {"error":"Este cliente ya no está disponible."}
+F2.5 tomar Gimnasio Fuerza                                 200  {"id":21,"nombre":"Gimnasio Fuerza","nit":"CF","telefono":"30002006","correo":null}
+A3.7 Carlos crea (9 -> 10)                                 201  {"id":25,"nombre":"Kiosko Carlos","nit":"CF","telefono":"24445555","correo":null}
+A3.7 Carlos toma otro                                      409  {"error":"Su cartera ya tiene 10 clientes, el máximo permitido."}
+Carlos crea otro (lleno)                                   409  {"error":"Su cartera ya tiene 10 clientes, el máximo permitido."}
+```
+
+### A4 — Oportunidades, etapas y regla propia (API real, `curl.exe`)
+
+La Gaseosa lata 355 ml (caja de 24) se creó con `Producto::create` (el mismo modelo que usa el
+formulario del catálogo), porque `SectorSeeder` todavía está vacío. Los conteos de historial se
+leyeron con SQL antes y después de cada rechazo.
+
+```
+== Lecturas ==
+sin token                                               401  {"error":"No autorizado."}
+A4.18 GET /productos                                    200  [{"id":1,"nombre":"Plan básico","precio":1200},{"id":2,"nombre":"Plan avanzado","precio":2750.5},{"id":3,"nombre":"Instalación","precio":450},{"id":4,"nombre":"Soporte anual","precio":3600}]
+GET /oportunidades (Valeria: 7)                         200  [{"id":1,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Renovación de planes","etapa":"ganada","probabilidad":100,"total":5650,"fecha_cierre":"2026-10-05T16…
+   -> 7 oportunidades
+GET ?etapa=ganada                                       200  [{"id":1,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Renovación de planes","etapa":"ganada","probabilidad":100,"total":5650,"fecha_cierre":"2026-10-05T16…
+   -> 3: Renovación de planes, Equipo para sucursal, Soporte del hogar
+A4.16 ?etapa=xyz                                        400  {"error":"El filtro etapa debe ser prospecto, calificado, propuesta, negociacion, ganada o perdida."}
+?etapa=a&etapa=b                                        400  {"error":"El filtro etapa debe ser prospecto, calificado, propuesta, negociacion, ganada o perdida."}
+GET /oportunidades/abc                                  400  {"error":"El identificador no es válido."}
+detalle Renovación de planes                            200  {"id":1,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Renovación de planes","etapa":"ganada","probabilidad":100,"total":5650,"fecha_cierre":"2026-10-05T16:00:00.000Z","motivo_perdida":null,"productos":[{"id":1,"producto_id":2,"nombre":"Plan avanzado","cantidad":2,"precio_unitario":2600,"subtotal":5200},{"id":2,"producto_id":3,"nombre":"Instalación","cantidad":1,"precio_unitario":450,"subtotal":450}],"historial":[{"etapa_anterior":null,"etapa_nueva":"prospecto","usuario":"Valeria López","fecha":"2026-09-23T16:00:00.000Z"},{"etapa_anterior":"prospecto","etapa_nueva":"calificado","usuario":"Valeria López","fecha":"2026-09-26T16:00:00.000Z"},{"etapa_anterior":"calificado","etapa_nueva":"propuesta","usuario":"Valeria López","fecha":"2026-09-29T16:00:00.000Z"},{"etapa_anterior":"propuesta","etapa_nueva":"negociacion","usuario":"Valeria López","fecha":"2026-10-02T16:00:00.000Z"},{"etapa_anterior":"negociacion","etapa_nueva":"ganada","usuario":"Valeria López","fecha":"2026-10-05T16:00:00.000Z"}]}
+A4.15 GET de Diego                                      404  {"error":"No se encontró la oportunidad."}
+GET inexistente                                         404  {"error":"No se encontró la oportunidad."}
+PATCH etapa de Diego, cuerpo inválido (404 antes)       404  {"error":"No se encontró la oportunidad."}
+POST producto a la de Diego                             404  {"error":"No se encontró la oportunidad."}
+
+== Crear (A4.1–A4.3) ==
+A4.1 POST con cliente propio                            201  {"id":12,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Pedido completo","etapa":"prospecto","probabilidad":10,"total":0,"fecha_cierre":null,"motivo_perdida":null,"productos":[],"historial":[{"etapa_anterior":null,"etapa_nueva":"prospecto","usuario":"Valeria López","fecha":"2026-11-08T22:52:46.000Z"}]}
+A4.2 cliente de Diego                                   422  {"errores":{"cliente_id":"Elija un cliente de su cartera."}}
+A4.2 cliente disponible                                 422  {"errores":{"cliente_id":"Elija un cliente de su cartera."}}
+cliente inexistente                                     422  {"errores":{"cliente_id":"Elija un cliente de su cartera."}}
+POST {}                                                 422  {"errores":{"titulo":"Escriba el título.","cliente_id":"Elija un cliente de su cartera."}}
+POST titulo con espacios                                422  {"errores":{"titulo":"Escriba el título."}}
+A4.3 con etapa ganada y vendedor_id                     201  {"id":13,"cliente":{"id":3,"nombre":"María Coyoy"},"titulo":"Con campos ignorados","etapa":"prospecto","probabilidad":10,"total":0,"fecha_cierre":null,"motivo_perdida":nu…
+A4.3 Diego no la ve                                     404  {"error":"No se encontró la oportunidad."}
+
+== Productos de la oportunidad (A4.4–A4.8) ==
+A4.4 Plan básico x3                                     201  {"id":12,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Pedido completo","etapa":"prospecto","probabilidad":10,"total":3600,"fecha_cierre":null,"motivo_perdida":…
+   -> total 3600; línea precio 1200
+A4.5 Plan básico otra vez                               409  {"error":"Este producto ya está en la oportunidad. Cambie su cantidad."}
+A4.6 Licencia anterior (inactiva)                       422  {"errores":{"producto_id":"Elija un producto activo del catálogo."}}
+A4.6 producto inexistente                               422  {"errores":{"producto_id":"Elija un producto activo del catálogo."}}
+A4.7 Instalación con precio_unitario 1                  201  {"id":12,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Pedido completo","etapa":"prospecto","probabilidad":10,"total":4050,"fecha_cierre":null,"motivo_perdida":…
+   -> precio guardado 450; total 4050
+A4.8 PATCH cantidad 0                                   422  {"errores":{"cantidad":"La cantidad debe ser un número entero de 1 a 999."}}
+A4.8 PATCH cantidad 1000                                422  {"errores":{"cantidad":"La cantidad debe ser un número entero de 1 a 999."}}
+A4.8 PATCH cantidad 2.5                                 422  {"errores":{"cantidad":"La cantidad debe ser un número entero de 1 a 999."}}
+A4.8 PATCH cantidad "3"                                 422  {"errores":{"cantidad":"La cantidad debe ser un número entero de 1 a 999."}}
+
+== prospecto → ganada (A4.9) ==
+a calificado                                            200  {"id":12,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Pedido completo","etapa":"calificado","probabilidad":25,"total":4050,"fecha_cierre":null,"motivo_perdida"…
+   -> etapa calificado, probabilidad 25
+a propuesta                                             200  {"id":12,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Pedido completo","etapa":"propuesta","probabilidad":50,"total":4050,"fecha_cierre":null,"motivo_perdida":…
+   -> etapa propuesta, probabilidad 50
+a negociacion                                           200  {"id":12,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Pedido completo","etapa":"negociacion","probabilidad":75,"total":4050,"fecha_cierre":null,"motivo_perdida…
+   -> etapa negociacion, probabilidad 75
+a ganada                                                200  {"id":12,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Pedido completo","etapa":"ganada","probabilidad":100,"total":4050,"fecha_cierre":"2026-11-08T22:52:46.000…
+   -> etapa ganada, probabilidad 100, fecha_cierre 2026-11-08T22:52:46.000Z, motivo , total 4050
+   -> historial:
+                    -> prospecto   Valeria López  2026-11-08T22:52:46.000Z
+        prospecto   -> calificado  Valeria López  2026-11-08T22:52:46.000Z
+        calificado  -> propuesta   Valeria López  2026-11-08T22:52:46.000Z
+        propuesta   -> negociacion Valeria López  2026-11-08T22:52:46.000Z
+        negociacion -> ganada      Valeria López  2026-11-08T22:52:46.000Z
+
+== Cerrada = 409 (A4.12) ==
+título                                                  409  {"error":"La oportunidad está cerrada y ya no se puede modificar."}
+etapa a perdida                                         409  {"error":"La oportunidad está cerrada y ya no se puede modificar."}
+agregar producto                                        409  {"error":"La oportunidad está cerrada y ya no se puede modificar."}
+cambiar cantidad                                        409  {"error":"La oportunidad está cerrada y ya no se puede modificar."}
+quitar producto                                         409  {"error":"La oportunidad está cerrada y ya no se puede modificar."}
+la nueva ganada: título                                 409  {"error":"La oportunidad está cerrada y ya no se puede modificar."}
+
+== Transiciones que D1 no permite (A4.13) ==
+Seguimiento anual -> propuesta                          409  {"error":"Ese cambio de etapa no está permitido."}
+Seguimiento anual -> negociacion                        409  {"error":"Ese cambio de etapa no está permitido."}
+Seguimiento anual -> ganada                             409  {"error":"Ese cambio de etapa no está permitido."}
+Seguimiento anual -> prospecto                          409  {"error":"Ese cambio de etapa no está permitido."}
+Capacitación de personal -> calificado                  409  {"error":"Ese cambio de etapa no está permitido."}
+Capacitación de personal -> ganada                      409  {"error":"Ese cambio de etapa no está permitido."}
+Capacitación de personal -> propuesta                   409  {"error":"Ese cambio de etapa no está permitido."}
+Ampliación a bodega -> propuesta                        409  {"error":"Ese cambio de etapa no está permitido."}
+Ampliación a bodega -> negociacion                      409  {"error":"Ese cambio de etapa no está permitido."}
+   -> historial antes 49, después 49
+
+== Ganar sin productos, perder, etapa inválida (A4.10, A4.11, A4.17) ==
+nueva sin productos                                     201  {"id":14,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Sin productos","etapa":"prospecto","probabilidad":10,"total":0,"fecha_cierre":null,"motivo_perdida":…
+a calificado                                            200  {"id":14,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Sin productos","etapa":"calificado","probabilidad":25,"total":0,"fecha_cierre":null,"motivo_perdida"…
+a propuesta                                             200  {"id":14,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Sin productos","etapa":"propuesta","probabilidad":50,"total":0,"fecha_cierre":null,"motivo_perdida":…
+a negociacion                                           200  {"id":14,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Sin productos","etapa":"negociacion","probabilidad":75,"total":0,"fecha_cierre":null,"motivo_perdida…
+A4.10 ganar sin productos                               422  {"errores":{"etapa":"Agregue al menos un producto antes de ganar la oportunidad."}}
+   -> historial antes 53, después 53
+A4.11 perder sin motivo                                 422  {"errores":{"motivo_perdida":"Escriba el motivo de la pérdida."}}
+A4.11 perder con solo espacios                          422  {"errores":{"motivo_perdida":"Escriba el motivo de la pérdida."}}
+A4.17 etapa xyz                                         422  {"errores":{"etapa":"Elija una etapa: prospecto, calificado, propuesta, negociacion, ganada o perdida."}}
+A4.17 sin etapa                                         422  {"errores":{"etapa":"Elija una etapa: prospecto, calificado, propuesta, negociacion, ganada o perdida."}}
+perder con motivo                                       200  {"id":14,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Sin productos","etapa":"perdida","probabilidad":0,"total":0,"fecha_cierre":"2026-11-08T22:52:49.000Z…
+   -> perdida, probabilidad 0, motivo 'Cerró el negocio', cierre 2026-11-08T22:52:49.000Z
+
+== Título, cantidad y quitar (A4.19–A4.22) ==
+A4.19 título nuevo                                      200  {"id":7,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Seguimiento anual 2027","etapa":"prospecto","probabilidad":10,"total":0,"fecha_cierre":null,"motivo_p…
+   -> Seguimiento anual 2027
+A4.19 título con espacios                               422  {"errores":{"titulo":"Escriba el título."}}
+A4.22 PATCH con línea de Renovación                     404  {"error":"No se encontró el producto en esta oportunidad."}
+A4.22 DELETE con línea de Renovación                    404  {"error":"No se encontró el producto en esta oportunidad."}
+A4.20 Instalación a 3                                   200  {"id":5,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Capacitación de personal","etapa":"propuesta","probabilidad":50,"total":1350,"fecha_cierre":null,"motivo_p…
+   -> subtotal 1350, total 1350
+A4.21 DELETE la línea (204)                             204  
+A4.21 detalle sin productos                             200  {"id":5,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Capacitación de personal","etapa":"propuesta","probabilidad":50,"total":0,"fecha_cierre":null,"motivo_perd…
+   -> productos 0, total 0
+
+== Regla propia: venta por caja (RP1–RP4) ==
+nueva para la regla                                     201  {"id":15,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Gaseosas por caja","etapa":"prospecto","probabilidad":10,"total":0,"fecha_cierre":null,"motivo_perdi…
+RP2 Gaseosa x30                                         422  {"errores":{"cantidad":"Este producto se vende por caja de 24 unidades: la cantidad debe ser múltiplo de 24."}}
+RP1 Gaseosa x48                                         201  {"id":15,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Gaseosas por caja","etapa":"prospecto","probabilidad":10,"total":312,"fecha_cierre":null,"motivo_perdida":null,"productos":[{"id":17,"producto_id":6,"nombre":"Gaseosa lata 355 ml","cantidad":48,"precio_unitario":6.5,"subtotal":312}],"historial":[{"etapa_anterior":null,"etapa_nueva":"prospecto","usuario":"Valeria López","fecha":"2026-11-08T22:52:50.000Z"}]}
+   -> copia en la línea: {"cantidad":48,"precio_unitario":"6.50","unidades_por_caja":24}
+RP3 PATCH a 36                                          422  {"errores":{"cantidad":"Este producto se vende por caja de 24 unidades: la cantidad debe ser múltiplo de 24."}}
+RP3 PATCH a 72                                          200  {"id":15,"cliente":{"id":1,"nombre":"Comercial El Quetzal"},"titulo":"Gaseosas por caja","etapa":"prospecto","probabilidad":10,"total":468,"fecha_cierre":null,"motivo_per…
+   -> cantidad 72, subtotal 468
+   (Alicia cambia unidades_por_caja de la Gaseosa a 12 en el catálogo)
+RP4 PATCH a 60 (la línea conserva 24)                   422  {"errores":{"cantidad":"Este producto se vende por caja de 24 unidades: la cantidad debe ser múltiplo de 24."}}
+otra oportunidad                                        201  {"id":16,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Gaseosas 2","etapa":"prospecto","probabilidad":10,"total":0,"fecha_cierre":null,"motivo_perdida":null,"pr…
+RP4 línea nueva con 60 (copia 12)                       201  {"id":16,"cliente":{"id":2,"nombre":"Ferretería Xela"},"titulo":"Gaseosas 2","etapa":"prospecto","probabilidad":10,"total":390,"fecha_cierre":null,"motivo_perdida":null,"…
+   -> cantidad 60
+   -> Producto en la respuesta sin unidades_por_caja: {"id":6,"nombre":"Gaseosa lata 355 ml","precio":6.5}
+```
+
+### L5 y L6 — Cifras de control (servicio `ReporteMes` sobre `crm_agua`)
+
+```
+Empresa · 2026-10: ventas 4, total 22450.00, pronóstico 6751.13
+    Carlos Ajú      1    7200.00   4125.75
+    Diego Castillo   1    6000.00    112.50
+    Iván Toj        0       0.00      0.00
+    Valeria López   2    9250.00   2512.88
+    producto Instalación   1 -> 450.00
+    producto Plan avanzado  2 -> 5200.00
+    producto Plan básico   5 -> 6000.00
+    producto Soporte anual  3 -> 10800.00
+Equipo de Sergio · 2026-10: ventas 3, total 15250.00, pronóstico 2625.38
+    Diego Castillo   1    6000.00    112.50
+    Valeria López   2    9250.00   2512.88
+Equipo de Sandra · 2026-10: ventas 1, total 7200.00, pronóstico 4125.75
+    Carlos Ajú      1    7200.00   4125.75
+    Iván Toj        0       0.00      0.00
+Empresa · 2026-11: ventas 1, total 3600.00, pronóstico 6751.13
+    Carlos Ajú      0       0.00   4125.75
+    Diego Castillo   0       0.00    112.50
+    Iván Toj        0       0.00      0.00
+    Valeria López   1    3600.00   2512.88
+Mi equipo (Sergio) · Diego Castillo   cartera 2 de 10 · 1 ventas · 6000.00
+Mi equipo (Sergio) · Valeria López   cartera 3 de 10 · 2 ventas · 9250.00
+Base: crm_agua · MySQL 8.0.40
+```
+
+Coinciden con la sección 11 del enunciado y con la tabla de «Cifras de control» de L1.
+
+### F2 — SPA (Edge sin ventana, 375 px, API real)
+
+```
+== F1: login ==
+OK    375 px sin scroll horizontal (login)
+OK    401 del login: mensaje del servidor, sin aviso de sesión vencida
+OK    el correo escrito se conserva
+OK    F2.1 cartera con 3 y «3 de 10»
+OK    NIT null se muestra CF (María Coyoy)
+OK    localStorage solo guarda el token
+OK    375 px sin scroll horizontal (cartera)
+== Búsqueda en el servidor con debounce ==
+OK    ?q=Xela devuelve solo Ferretería Xela
+OK    debounce: una sola petición al servidor para 4 teclas — ["http://127.0.0.1:3000/api/clientes?q=Xela"]
+OK    el foco sigue en la búsqueda tras redibujar
+OK    el contador sigue siendo la cartera completa
+OK    A3.18 desde la SPA: 4521817-k encuentra Comercial El Quetzal
+== F2.4 / F2.5: disponibles y tomar ==
+OK    F2.4 seis disponibles, cada uno con «Tomar»
+OK    375 px sin scroll horizontal (disponibles)
+OK    F2.5 Gimnasio Fuerza sale de disponibles sin recargar
+OK    F2.5 aparece en la cartera y el contador pasa a «4 de 10»
+== F2.3: 409 al tomar uno que otro ya tomó ==
+OK    Diego lo toma primero por la API
+OK    F2.3 muestra el mensaje del 409 y refresca la lista (quedan 4)
+== F2.2: alta con errores del 422 junto a cada campo ==
+OK    mensaje del servidor junto al NIT
+OK    mensaje junto al teléfono y al correo
+OK    lo escrito se conserva
+OK    375 px sin scroll horizontal (alta con errores)
+OK    409 (NIT repetido) con el mensaje del servidor, datos conservados
+== S7 / F6.4: nombre malicioso ==
+OK    alta 201: se cierra el formulario y el contador pasa a «5 de 10»
+OK    el nombre se ve como texto
+OK    no se creó ningún <img> en la página
+OK    no se ejecutó alert()
+== Indicador de carga ==
+OK    se ve el indicador mientras hay una petición en curso
+== Recarga con token: se valida contra una ruta protegida ==
+OK    recarga con token válido: entra directo a la cartera
+OK    recarga con token alterado: vuelve al login con aviso
+OK    el token alterado se borró
+== 401 en plena sesión: usuario desactivado ==
+OK    cuenta desactivada a media sesión: vuelve al login con aviso
+== API apagada ==
+   (API apagada)
+OK    API apagada: mensaje que lo explica y botón «Reintentar»
+OK    no es una pantalla vacía (la sesión sigue)
+
+Consola del navegador: (sin errores)
+Todo dio lo esperado.
+```
+
+### `node --test` (`npm test` en `api/`)
+
+```
+✔ NIT: mismos resultados que Nit.php (1.3206ms)
+✔ Teléfono: mismos resultados que Telefono.php (0.2732ms)
+✔ Correo: mismos resultados que la regla del panel (email + Correo.php) (0.987ms)
+✔ Valores que no son texto son inválidos (no lanzan) (0.1004ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 122.6715
+```
+
+### `php artisan test` (salida de `vendor/bin/phpunit --testdox`)
+
+```
+PHPUnit 12.5.43 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.27
+Configuration: C:\Users\cuenta\Documents\6to Semestre\Progra Web\Proyecto Final\laravel\phpunit.xml
+
+Time: 00:14.145, Memory: 72.00 MB
+
+Acceso Panel (Tests\Feature\AccesoPanel)
+ ✔ El administrador entra
+ ✔ El supervisor entra
+ ✔ El vendedor no entra y se le envia a la spa
+ ✔ Una cuenta desactivada no entra
+ ✔ Una clave incorrecta no entra
+ ✔ Una cuenta desactivada pierde la sesion en la siguiente peticion
+ ✔ Un vendedor con sesion abierta es expulsado
+ ✔ El panel no exige verificar el correo
+
+Authentication (Tests\Feature\Auth\Authentication)
+ ✔ Login screen can be rendered
+ ✔ Users can authenticate using the login screen
+ ✔ Users can not authenticate with invalid password
+ ✔ Users can logout
+
+Clientes (Tests\Feature\Clientes)
+ ✔ Recorre los casos de normalizacion compartidos
+ ✔ Busqueda con filtros en forma de arreglo responde 400
+ ✔ Busqueda toma porcentaje y guion bajo como texto
+ ✔ Crea cliente normalizado y acepta varios cf
+ ✔ Rechaza datos invalidos y duplicados normalizados
+ ✔ Lista busca por nombre nit y filtra por vendedor o disponible
+ ✔ Supervisor no ve clientes ajenos y admin ve todos
+ ✔ Asigna y no permite el cliente numero once
+ ✔ No asigna a vendedor desactivado
+ ✔ Reasigna solo oportunidades abiertas y no toca actividades
+ ✔ Libera clientes sin oportunidades abiertas y rechaza los demas
+ ✔ Elimina solo clientes sin oportunidades y borra sus actividades
+ ✔ Vendedor no entra al panel de clientes
+ ✔ Dos asignaciones no superan el maximo de cartera
+ ✔ Lo ajeno responde 404 antes de validar en cada accion
+ ✔ Editar exige los campos y responde en espanol
+ ✔ La paginacion esta en espanol
+ ✔ Solo el administrador elimina clientes
+ ✔ Asignar y liberar bloquean primero users y luego clientes
+ ✔ Las demas puertas con formrequest rechazan al rol antes de validar
+
+Clientes Semilla (Tests\Feature\ClientesSemilla)
+ ✔ L4 1 y l4 2 respetan la visibilidad y los filtros
+ ✔ L4 3 l4 4 l4 5 y l4 6 validan identidad
+ ✔ L4 7 rechaza la cartera numero once
+ ✔ L4 8 reasigna abiertas y conserva cerradas e historial
+ ✔ L4 9 rechaza liberar con oportunidades abiertas
+ ✔ L4 13 libera cliente con solo oportunidades cerradas
+ ✔ L4 15 y l4 16 respetan vendedores desactivados
+ ✔ L4 17 reactivar vendedor no mueve su cartera
+ ✔ L4 14 editar con valores repetidos falla y sin cambios no choca
+ ✔ L4 10 y l4 11 controlan eliminacion
+ ✔ L4 12 no permite asignar a vendedor desactivado
+
+Cuentas (Tests\Feature\Cuentas)
+ ✔ Una cuenta nueva creada por el administrador entra de inmediato
+ ✔ Un vendedor se crea con su supervisor
+ ✔ Un vendedor sin supervisor o con uno inactivo se rechaza
+ ✔ Un supervisor enviado a un administrador o supervisor queda vacio
+ ✔ El administrador no puede desactivarse
+ ✔ El administrador no puede quitarse el rol
+ ✔ No se cambia el rol de un supervisor con vendedores
+ ✔ No se cambia el rol de un vendedor con clientes
+ ✔ Si se puede desactivar a un supervisor con equipo
+ ✔ Editar sin contrasena no cambia el hash
+ ✔ Los mensajes y los datos escritos vuelven al formulario
+ ✔ Las pantallas de alta y edicion se muestran
+ ✔ Un supervisor no administra cuentas
+ ✔ Las cuentas no se borran
+ ✔ La lista escapa los nombres
+
+Email Verification (Tests\Feature\Auth\EmailVerification)
+ ✔ Email verification screen can be rendered
+ ✔ Email can be verified
+ ✔ Email is not verified with invalid hash
+
+Equipos (Tests\Feature\Equipos)
+ ✔ Los scopes definen lo que ve cada uno
+ ✔ La policy responde 404 y no 403
+ ✔ S5 sergio contra clientes de sandra recibe 404 antes de validar
+ ✔ L5 4 sergio no ve a carlos ni a ivan ni sus clientes
+ ✔ L5 2 sergio no asigna a carlos ni a ivan ni a quien no es vendedor
+ ✔ Sandra no asigna a ivan desactivado pero ve su cartera
+ ✔ L5 3 mi equipo con cartera y ventas del mes
+ ✔ El administrador ve todo
+ ✔ Un vendedor no entra a mi equipo
+
+Example (Tests\Feature\Example)
+ ✔ The application returns a successful response
+
+Example (Tests\Unit\Example)
+ ✔ That true is true
+
+Password Confirmation (Tests\Feature\Auth\PasswordConfirmation)
+ ✔ Confirm password screen can be rendered
+ ✔ Password can be confirmed
+ ✔ Password is not confirmed with invalid password
+
+Password Reset (Tests\Feature\Auth\PasswordReset)
+ ✔ Reset password link screen can be rendered
+ ✔ Reset password link can be requested
+ ✔ Reset password screen can be rendered
+ ✔ Password can be reset with valid token
+
+Password Update (Tests\Feature\Auth\PasswordUpdate)
+ ✔ Password can be updated
+ ✔ Correct password must be provided to update password
+
+Productos (Tests\Feature\Productos)
+ ✔ El administrador puede crear y editar un producto
+ ✔ Rechaza precios invalidos
+ ✔ Precio maximo y un solo mensaje por campo
+ ✔ Rechaza nombres duplicados
+ ✔ Desactiva sin eliminar fisicamente
+ ✔ Cambiar precio no modifica el precio historico
+ ✔ Valida unidades por caja
+ ✔ Solo el administrador accede al catalogo
+ ✔ No existe eliminacion fisica
+
+Profile (Tests\Feature\Profile)
+ ✔ Profile page is displayed
+ ✔ Profile information can be updated
+ ✔ Email verification status is unchanged when the email address is unchanged
+ ✔ Un usuario no puede borrar su cuenta desde el perfil
+ ✔ El perfil no ofrece borrar la cuenta
+
+Registration (Tests\Feature\Auth\Registration)
+ ✔ La pagina de registro no existe
+ ✔ No se puede enviar un registro
+ ✔ No existe la ruta con nombre register
+ ✔ El login no enlaza a un registro
+
+Reporte Mes (Tests\Feature\ReporteMes)
+ ✔ L6 5 empresa por vendedor y por producto en octubre
+ ✔ L6 6 supervisores ven solo su equipo
+ ✔ L6 7 noviembre y un mes sin ventas da ceros
+ ✔ El mes se agrupa en hora de guatemala y no en utc
+ ✔ L3 5 el total usa el precio de la linea y no el del catalogo
+ ✔ El mes actual y las fechas se calculan en hora de guatemala
+ ✔ La pagina del reporte muestra las cifras y el mes actual por omision
+ ✔ Un mes invalido se rechaza con mensaje y no con 500
+ ✔ L6 1 l6 2 y l6 4 lista de oportunidades
+ ✔ Filtros invalidos de la lista responden 400
+ ✔ L6 3 el panel no modifica oportunidades y el vendedor no entra
+
+OK (110 tests, 741 assertions)
 ```
 
 ## Bitácora de IA (P5)
