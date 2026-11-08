@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import {
+  correoEsValido,
   nitEsValido,
   normalizarNit,
   normalizarTelefono,
@@ -30,9 +31,17 @@ test('Teléfono: mismos resultados que Telefono.php', () => {
   }
 });
 
+test('Correo: mismos resultados que la regla del panel (email + Correo.php)', () => {
+  assert.ok(casos.correo.length > 0);
+  for (const caso of casos.correo) {
+    assert.equal(correoEsValido(caso.entrada), caso.valido, `correo(${JSON.stringify(caso.entrada)})`);
+  }
+});
+
 test('Valores que no son texto son inválidos (no lanzan)', () => {
   for (const valor of [undefined, null, 4521817, ['4521817K'], {}]) {
     assert.equal(nitEsValido(valor), false);
     assert.equal(telefonoEsValido(valor), false);
+    assert.equal(correoEsValido(valor), false);
   }
 });

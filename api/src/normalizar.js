@@ -81,3 +81,18 @@ export function normalizarTelefono(valor) {
 export function telefonoEsValido(valor) {
   return normalizarTelefono(valor) !== null;
 }
+
+// Formato de correo: la misma expresión que laravel/app/Support/Correo.php (L7.2).
+// Parte local «dot-atom» (con letras y marcas Unicode); dominio con etiquetas de 1 a 62
+// caracteres ASCII y guiones internos. Sin comillas, comentarios ni [IP].
+const CARACTER_LOCAL = "[A-Za-z0-9!#$%&'*+/=?^_`{|}~\\p{L}\\p{M}\\p{N}-]";
+const ETIQUETA = '[A-Za-z0-9](?:[A-Za-z0-9-]{0,60}[A-Za-z0-9])?';
+const PATRON_CORREO = new RegExp(
+  `^${CARACTER_LOCAL}+(?:\\.${CARACTER_LOCAL}+)*@${ETIQUETA}(?:\\.${ETIQUETA})*$`,
+  'u',
+);
+
+/** Solo el formato; el largo (≤ 150) y el `trim` los aplica la validación del campo. */
+export function correoEsValido(valor) {
+  return typeof valor === 'string' && PATRON_CORREO.test(valor);
+}

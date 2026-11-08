@@ -1,7 +1,13 @@
 import { Router } from 'express';
 import pool, { transaccion } from '../db.js';
 import { exigirCuerpo } from '../middleware/cuerpo.js';
-import { compactarNit, nitEsValido, normalizarNit, normalizarTelefono } from '../normalizar.js';
+import {
+  compactarNit,
+  correoEsValido,
+  nitEsValido,
+  normalizarNit,
+  normalizarTelefono,
+} from '../normalizar.js';
 
 /**
  * A3 — Clientes y cartera (spec 3.1, 3.1.1, 3.4; R2, R3, R4, D5, P-7, P-8).
@@ -40,10 +46,6 @@ const MENSAJES = {
 // Columnas que el contrato expone (nunca vendedor_id) y las que PATCH puede editar (D5).
 const COLUMNAS_CLIENTE = 'id, nombre, nit, telefono, correo';
 const CAMPOS_EDITABLES = ['nombre', 'nit', 'telefono', 'correo'];
-
-// Aproximación de la regla `email` (RFC) de Laravel: partes «dot-atom» separadas por una @.
-const ATOMO = '[^\\s@"(),.:;<>\\[\\]\\\\]+';
-const PATRON_CORREO = new RegExp(`^${ATOMO}(?:\\.${ATOMO})*@${ATOMO}(?:\\.${ATOMO})*$`, 'u');
 
 /** Forma `Cliente` de 3.2: NIT NULL se devuelve como "CF". */
 function aCliente(fila) {
@@ -94,7 +96,7 @@ const VALIDADORES = {
     if (correo === '') {
       return { valor: null };
     }
-    if (!PATRON_CORREO.test(correo)) {
+    if (!correoEsValido(correo)) {
       return { error: MENSAJES.correo };
     }
 
