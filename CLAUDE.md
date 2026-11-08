@@ -142,3 +142,6 @@ Condiciones que cumple (y que cualquier cambio a la regla debe seguir cumpliendo
 - Si el agente propuso algo incorrecto o distinto de la especificación y se corrigió, se registra en
   la bitácora de IA de `docs/verificacion.md` (P5).
 - No hacer commits ni crear etiquetas sin que la pareja lo pida.
+- No restaures, reviertas ni sobrescribas archivos que no hayas creado en la tarea actual sin
+  preguntarme antes. Si quieres dejar el árbol limpio para un commit, muéstrame `git diff` y espera
+  mi OK. Antes de cada commit, compara su contenido con lo que promete el mensaje.
