@@ -534,6 +534,152 @@ Leyenda de «Dónde»: **M** migración (tipo / FK) · **CK** `CHECK` · **UQ** 
 
 ---
 
+## 5. Decisiones de la sección 7
+
+### 5.1 D1 — Transiciones del embudo — **DECIDIDO**
+
+**Se permite:** avanzar una etapa a la vez entre las abiertas
+(prospecto → calificado → propuesta → negociacion); ganar **solo** desde negociacion; perder desde
+**cualquier etapa abierta**. No hay saltos ni retrocesos. Cualquier otra transición (incluida la que
+deja la etapa igual) responde **409**. Una etapa que no existe responde **422**.
+
+| Desde \ a | calificado | propuesta | negociacion | ganada | perdida |
+|-----------|:-:|:-:|:-:|:-:|:-:|
+| prospecto | ✔ | | | | ✔ |
+| calificado | | ✔ | | | ✔ |
+| propuesta | | | ✔ | | ✔ |
+| negociacion | | | | ✔ | ✔ |
+
+**Alternativas descartadas:**
+- *Solo el mínimo* (perder solo desde negociación): la semilla tiene *Plan familiar* perdida desde
+  propuesta; un cliente puede desistir en cualquier momento y obligar a avanzar hasta negociación para
+  perder falsea el embudo.
+- *Retroceder una etapa*: más flexible, pero multiplica los casos a probar y complica el historial sin
+  necesidad clara en el sector.
+- *Libre entre abiertas*: el historial deja de reflejar el avance real y el pronóstico se puede inflar saltando a negociación.
+
+### 5.2 D2 — Cliente reasignado — **DECIDIDO**
+
+Las oportunidades **cerradas** (ganadas y perdidas) se quedan con su vendedor original: conserva el
+crédito y los reportes de meses pasados no cambian. Las **abiertas** pasan al nuevo vendedor (se
+actualiza `oportunidades.vendedor_id`), en la misma transacción que la reasignación.
+
+**Alternativas descartadas:**
+- *Todo pasa al nuevo*: cambia reportes ya cerrados y le quita el crédito a quien vendió.
+- *Nada se mueve*: el nuevo vendedor no podría trabajar las oportunidades abiertas de su propio cliente (R2).
+
+> **PENDIENTE: decidir (P-5) — actividades del cliente reasignado.** `actividades.vendedor_id` es
+> «quién la registró», y R2 dice que el vendedor ve las actividades de los clientes de su cartera.
+>
+> | Opción | A favor | En contra |
+> |--------|---------|-----------|
+> | A. No se toca `vendedor_id`; el nuevo vendedor ve **todas** las actividades del cliente porque la visibilidad sale de la cartera | Conserva quién hizo cada cosa; consulta simple (`JOIN clientes`) | El nuevo vendedor ve actividades completadas del anterior |
+> | B. Las **pendientes** cambian `vendedor_id` al nuevo; las completadas quedan, y el nuevo solo ve las suyas | Cada quien ve solo lo que le toca | Altera «quién la registró»; contradice la definición de la columna |
+> | C. Igual que A, pero la SPA muestra «registrada por otro vendedor» en las ajenas | Transparente | Exige exponer un dato de otro vendedor (choca con R8) — probablemente descartable |
+
+### 5.3 D3 — Liberar un cliente con oportunidades abiertas — **DECIDIDO**
+
+**No se puede.** El panel rechaza la liberación con un mensaje («Cierre o reasigne las
+oportunidades abiertas de este cliente antes de liberarlo.»). Con oportunidades solo cerradas, sí se
+libera; las cerradas siguen con su vendedor original y no las ve quien tome el cliente después (R2).
+
+**Alternativas descartadas:**
+- *Liberar y marcarlas perdidas*: cambia el pronóstico y crea pérdidas que nadie decidió.
+- *Liberar y dejarlas con el vendedor anterior*: quedan oportunidades abiertas de un cliente que no
+  está en la cartera de su dueño, lo que rompe R2 y R5.
+
+### 5.4 D4 — Cartera de un vendedor desactivado — **DECIDIDO**
+
+Sus clientes **siguen asignados** a él hasta que el supervisor o el administrador los reasigne desde
+el panel. El panel marca a esos clientes como «vendedor desactivado». No se pueden asignar clientes
+nuevos a un vendedor desactivado. Si se reactiva, recupera su cartera tal como estaba.
+
+**Alternativas descartadas:**
+- *Liberar automáticamente*: choca con D3 cuando hay oportunidades abiertas.
+- *Obligar a reasignar antes de desactivar*: deja sin acceso inmediato a alguien que debe salir ya
+  (urgencia de seguridad), que es justamente el caso de uso de desactivar.
+
+### 5.5 D5 — Campos que el contrato no lista — **PENDIENTE: decidir (P-4)**
+
+En cualquier caso, esos campos **nunca se usan** (p. ej. `vendedor_id`, `etapa` al crear, `precio_unitario`).
+
+| Opción | A favor | En contra |
+|--------|---------|-----------|
+| A. Ignorarlos en silencio (lista blanca de campos) | Simple; la SPA puede mandar objetos completos sin romperse; tolerante a versiones | Un error de escritura del cliente (`telefno`) pasa sin aviso |
+| B. Rechazarlos con 422 (`errores.campo: "Este campo no se acepta."`) | Explícito; detecta errores y abusos | Más código y más casos en Postman; una SPA desactualizada falla |
+| C. Ignorar en general, pero 422 para campos sensibles (`vendedor_id`, `precio_unitario`, `etapa` al crear) | Avisa justo donde hay intento de abuso | Dos comportamientos que explicar y probar |
+
+### 5.6 Decisiones menores — **PENDIENTES**
+
+> **P-6 — ¿Se puede desmarcar una actividad completada (`completada: false`)?**
+> A. Sí: corrige errores del vendedor; en contra, se pierde el rastro de que estuvo completada.
+> B. No, 409: el registro es fiel; en contra, un clic equivocado no tiene arreglo en la SPA.
+
+> **P-7 — `PATCH /clientes/:id` con un objeto sin campos editables (`{}`)**
+> A. 400 («falta el cuerpo»): coherente con la tabla de códigos.
+> B. 200 sin cambios: idempotente y simple; en contra, oculta errores del cliente. Depende de D5.
+
+> **P-8 — Búsqueda `?q=` con NIT escrito con guion o minúscula (`4521817-k`)**
+> A. Compactar también `q` antes de buscar en `nit`: el vendedor encuentra lo que escribe.
+> B. Buscar tal cual: más simple; en contra, `4521817-k` no encuentra nada.
+
+---
+
+## 6. Regla propia — **PENDIENTE: decidir (P-3)**
+
+Condiciones que toda opción debe cumplir (enunciado, sección 3):
+
+- Se cumple en el servidor (y en la base si aplica), tiene criterios Dado/Cuando/Entonces y una prueba en Postman.
+- **Con solo `VerificacionSeeder` el sistema se comporta exactamente como el núcleo y las cifras de
+  control no cambian.** Por eso las tres opciones dependen de una columna nueva en `productos`
+  (nullable o con valor por omisión, en una **migración nueva**) que los 5 productos de la semilla no
+  tienen: la regla nunca se activa con la semilla.
+- En el panel las oportunidades son de solo lectura, así que la regla se cumple en la **API**; el
+  panel solo administra la columna nueva en el catálogo (L3).
+
+### Opción A — Envases retornables
+
+*Un pedido con recargas de garrafón no puede ganarse si el cliente no tendría envases suficientes:
+recargas de la oportunidad ≤ envases comprados por el cliente en ventas ganadas + envases incluidos en
+esta oportunidad.*
+
+- Columna nueva: `productos.tipo_envase ENUM('recarga','envase') NULL`.
+- Dónde: API al pasar a `ganada` (consulta `SUM` en la misma TX). 409 o 422 con mensaje
+  «El cliente no tiene envases suficientes para N recargas. Agregue envases al pedido.»
+- Dado/Cuando/Entonces (ejemplo): Dado un cliente sin compras previas y un pedido en negociación con
+  10 recargas y 0 envases, cuando se intenta ganar, entonces se rechaza; dado el mismo pedido con 10
+  envases, entonces se gana.
+- **A favor:** muy propia del sector (el garrafón retornable es el corazón del negocio); fácil de
+  explicar en la defensa; prueba concreta.
+- **En contra:** la consulta cruza ventas anteriores del cliente; hay que decidir si cuentan envases
+  vendidos por otro vendedor (cliente reasignado) — sin exponerle esos datos (R8).
+
+### Opción B — Pedido mínimo para negocios (ejemplo del enunciado)
+
+*A un cliente con NIT (no CF) no se le gana un pedido de productos de la distribuidora por debajo de
+un monto mínimo (p. ej. Q300.00), porque no cubre el costo de la entrega a negocio.*
+
+- Columna nueva: `productos.de_distribucion BOOLEAN NULL` (o `categoria`); el mínimo, en
+  `api/.env` o como constante documentada.
+- Dónde: API al pasar a `ganada`. Solo cuenta el subtotal de los productos marcados.
+- **A favor:** simple; viene sugerida en el enunciado, así que su sentido ya está aceptado.
+- **En contra:** es el ejemplo del enunciado (otra pareja puede elegirla; menos original); limitarla a
+  productos marcados para no romper la semilla se ve artificial y hay que justificarlo en la defensa.
+
+### Opción C — Venta al detalle para consumidor final
+
+*Un cliente CF (hogar) no puede tener en un pedido más de N unidades (p. ej. 20) de un producto de
+mayoreo (fardos, cajas): esas ventas se facturan con NIT.*
+
+- Columna nueva: `productos.max_cf SMALLINT NULL` (límite por producto; NULL = sin límite).
+- Dónde: API al **agregar** o **cambiar cantidad** de una línea (422 en `cantidad`). Se puede reforzar
+  en la base con un trigger en una migración nueva, porque un `CHECK` no puede leer otra tabla.
+- **A favor:** se valida en un solo punto y con la respuesta ya definida (422 por campo); fácil de probar en Postman.
+- **En contra:** un trigger es más difícil de defender; si se omite, la regla vive solo en la API.
+  Además, si un cliente cambia de CF a NIT (o al revés) con el pedido abierto, hay que decidir qué pasa.
+
+---
+
 ## 7. Control de cambios
 
 | Versión | Etiqueta | Cambio |
