@@ -3,6 +3,7 @@ import express from 'express';
 import { autenticacion } from './middleware/autenticacion.js';
 import { errorHandler, notFoundHandler } from './middleware/errores.js';
 import authRouter from './routes/auth.js';
+import clientesRouter from './routes/clientes.js';
 
 const app = express();
 const corsOrigin = process.env.CORS_ORIGIN;
@@ -35,6 +36,7 @@ app.use('/api/auth', authRouter);
 // A2: todo lo demás bajo /api exige un token válido, incluso una ruta que no existe
 // (sin token: 401; con token: sigue hasta el 404). Los routers protegidos se montan después.
 app.use('/api', autenticacion);
+app.use('/api/clientes', clientesRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

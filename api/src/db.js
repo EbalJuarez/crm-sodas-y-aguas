@@ -13,4 +13,30 @@ const pool = mysql.createPool({
   timezone: 'Z',
 });
 
+/**
+ * Ejecuta `trabajo(conexion)` dentro de una transacción: commit si termina, rollback si lanza.
+ * La conexión se libera siempre (finally), también si el rollback falla.
+ */
+export async function transaccion(trabajo) {
+  const conexion = await pool.getConnection();
+
+  try {
+    await conexion.beginTransaction();
+    const resultado = await trabajo(conexion);
+    await conexion.commit();
+
+    return resultado;
+  } catch (error) {
+    try {
+      await conexion.rollback();
+    } catch (errorRollback) {
+      console.error(errorRollback);
+    }
+
+    throw error;
+  } finally {
+    conexion.release();
+  }
+}
+
 export default pool;
