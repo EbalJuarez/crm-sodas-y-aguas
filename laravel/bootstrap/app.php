@@ -12,7 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // R1: en cada petición del panel se comprueba que la cuenta siga activa y sea del panel.
+        $middleware->web(append: [
+            \App\Http\Middleware\CuentaDelPanel::class,
+        ]);
+
+        $middleware->alias([
+            'rol' => \App\Http\Middleware\SoloRol::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

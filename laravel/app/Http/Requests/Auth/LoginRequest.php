@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Http\Middleware\CuentaDelPanel;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -34,7 +36,22 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'email.required' => 'Escriba su correo.',
+            'email.email' => 'Escriba un correo válido.',
+            'password.required' => 'Escriba su contraseña.',
+        ];
+    }
+
+    /**
      * Attempt to authenticate the request's credentials.
+     *
+     * R1: primero se validan las credenciales SIN abrir sesión; solo una cuenta activa de
+     * administrador o supervisor llega a Auth::login().
      *
      * @throws ValidationException
      */
@@ -42,13 +59,26 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (! Auth::validate($this->only('email', 'password'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => 'Estas credenciales no coinciden con nuestros registros.',
             ]);
         }
+
+        /** @var User $usuario */
+        $usuario = Auth::getLastAttempted();
+
+        if (! $usuario->activo) {
+            throw ValidationException::withMessages(['email' => CuentaDelPanel::MENSAJE_DESACTIVADA]);
+        }
+
+        if (! $usuario->puedeEntrarAlPanel()) {
+            throw ValidationException::withMessages(['email' => CuentaDelPanel::MENSAJE_VENDEDOR]);
+        }
+
+        Auth::login($usuario, $this->boolean('remember'));
 
         RateLimiter::clear($this->throttleKey());
     }
@@ -69,10 +99,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'email' => "Demasiados intentos. Vuelva a intentarlo en {$seconds} segundos.",
         ]);
     }
 
