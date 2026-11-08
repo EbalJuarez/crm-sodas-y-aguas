@@ -7,7 +7,7 @@
 > Fuente del núcleo: `docs/Proyecto_Final_CRM_Enunciado.pdf` (en este documento, «el enunciado»).
 > Si algo de aquí choca con el núcleo, gana el enunciado y se corrige esta especificación.
 
-**Estado:** spec-v1 · **Versión:** 1.0
+**Estado:** spec-v1 (etiqueta en `90613b0`) · **Versión:** 1.1 (aclaraciones posteriores a la etiqueta en la sección 7)
 
 ### Pendientes de este documento
 
@@ -503,7 +503,7 @@ en `etapa`. Del mismo modo, `?estado=x` → 400 y `{ "completada": "x" }` → 42
 |-------|-------|-------------------|
 | `clientes.nombre` | obligatorio, 1–150 caracteres tras quitar espacios sobrantes | «Escriba el nombre del cliente.» |
 | `clientes.nit` | obligatorio; `CF` o NIT válido por módulo 11 tras compactar; 2–12 caracteres compacto | «Escriba un NIT válido (con su dígito verificador) o CF.» |
-| `clientes.telefono` | obligatorio; tras quitar espacios, guiones, puntos, paréntesis y `+502`/`502`, 8 dígitos que empiezan con 2–9 | «Escriba un teléfono de Guatemala de 8 dígitos.» |
+| `clientes.telefono` | obligatorio; tras quitar espacios, guiones, puntos, paréntesis y `+502`/`502`, 8 dígitos que empiezan con 2–9 (cuándo se quita el prefijo: aclaración abajo) | «Escriba un teléfono de Guatemala de 8 dígitos.» |
 | `clientes.correo` | opcional; formato de correo; ≤ 150 | «Escriba un correo válido.» |
 | `oportunidades.titulo` | obligatorio, 1–150 tras quitar espacios sobrantes | «Escriba el título.» |
 | `motivo_perdida` | obligatorio al perder, 1–255 tras quitar espacios sobrantes | «Escriba el motivo de la pérdida.» |
@@ -512,6 +512,17 @@ en `etapa`. Del mismo modo, `?estado=x` → 400 y `{ "completada": "x" }` → 42
 | `actividades.descripcion` | obligatoria, 1–500 | «Escriba la descripción.» |
 | `vence_en` | opcional; ISO 8601 **con** zona horaria | «Escriba la fecha con su zona horaria.» |
 | `completada` | booleano JSON | «Indique verdadero o falso.» |
+
+**Aclaración (versión 1.1): prefijo `502` del teléfono.** Un teléfono válido puede empezar con 502
+(`5021 2345`), así que el prefijo no se quita a ciegas. La normalización, igual en el panel y en la API, es:
+
+1. Se quitan los separadores: espacios, guiones, puntos y paréntesis.
+2. Si lo que queda empieza con `+502`, se quita ese prefijo.
+3. Si no, y quedan **exactamente 11 dígitos** que empiezan con `502`, se quita el prefijo `502`.
+4. El resultado debe cumplir `^[2-9][0-9]{7}$`; si no, es inválido.
+
+Ejemplos: `5021 2345` queda `50212345` (válido: 8 dígitos, el 502 es parte del número);
+`502 5512 3456` queda `55123456` (11 dígitos que empiezan con 502); `+502 5512 3456` queda `55123456`.
 
 Solo en el panel (catálogo): `productos.nombre` obligatorio, ≤ 120, único; `productos.precio` número
 > 0 con 2 decimales como máximo; `productos.unidades_por_caja` vacío o entero de 1 a 999.
@@ -837,3 +848,4 @@ RP1, RP2 y RP3 van en la colección de Postman (A8.2).
 | 0.1 | — | Borrador inicial |
 | 0.2 | — | Revisión: renumera S1–S8 según el enunciado; quita la contraseña pública; decide nombre, vocabulario, regla propia (venta por caja), D6 y mensaje del panel de D3; agrega `ConcurrenciaSeeder` (A3.8); completa criterios L2, L4, L5, L6, A3–A5, A8, F2 y el detalle de endpoints; agrega la columna «Regla» a la sección 4; separa 400 (query) de 422 (cuerpo); decide D5 (ignorar), P-6 (se puede desmarcar), P-7 (400) y P-8 (compactar `q`) |
 | 1.0 | `spec-v1` (por crear) | Cierra P-5 (las actividades no se tocan al reasignar; visibilidad por cartera actual), aclaración a R8 y excepción a A3.3 en D2; criterios A5.12–A5.14, A6.6, F4.4, F5.3; D3 solo con mensaje del panel. Sin pendientes |
+| 1.1 | — (`spec-v1` no se mueve) | Aclaración en 3.4: cuándo se quita el prefijo `+502`/`502` del teléfono (solo si empieza con `+502`, o si quedan exactamente 11 dígitos que empiezan con 502), con ejemplos. No cambia ningún criterio de la semilla |
