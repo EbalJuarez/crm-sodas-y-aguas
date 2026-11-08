@@ -12,7 +12,7 @@
 |--------|-------------|--------|-----|
 | 1 | Integrante A | _(fecha)_ | _(fecha)_ |
 | 2 | Integrante B | _(fecha)_ | 2026-11-08 · **hecho** |
-| 3 | Integrante A | _(fecha)_ | _(fecha)_ |
+| 3 | Integrante A | _(fecha)_ | 2026-11-08 · **hecho** (con pendientes) |
 | 4 | Integrante B | _(fecha)_ | _(fecha)_ |
 | Cierre | A y B | _(fecha)_ | _(fecha)_ |
 | Entrega (`entrega-final`) | A y B | — | _(fecha: semana anterior al examen final)_ |
@@ -205,7 +205,14 @@ navegador; **lee el diff completo** (`git diff spec-v1..HEAD`). Anota lo encontr
 `none` en Postman; recorre L3 y L4 con la semilla; abre la SPA desde :5500 y desde otro origen (S6);
 **lee el diff completo** del bloque 2. Commit `docs: verificacion del bloque 2`.
 
-### Bloque 3 — Integrante A: L5, L6, L7, A3, A4, F2
+### Bloque 3 — Integrante A: L5, L6, L7, A3, A4, F2 — **HECHO** (2026-11-08)
+
+> Tareas 3.1, 3.2, 3.3, 3.5 y 3.7 terminadas (3.7 sin probar el hito I2): `510138c`, `c73747a`, `7dbbf5f`, `e3d89a5`, `c7869d3`,
+> `6a0b42a`. 3.6 parcial (`fe36cd2`, `c9e31bc`): falta la tabla cruzada de L7.2 y decidir las vistas de
+> Breeze. 3.4 parcial: el script es `api/scripts/concurrencia.mjs`; **falta `ConcurrenciaSeeder`** (A3.8
+> tal cual, A3.9 y dos altas con el mismo NIT). 3.2 y 3.5 quedaron en un commit cada una. 110 pruebas en
+> verde. Evidencia en `docs/verificacion.md` («Bloque 3», `9a4f4c2`); entorno, pendientes y riesgos en
+> `docs/traspaso.md` («Traspaso del bloque 3 al bloque 4»).
 
 | # | Requisito | Tarea | Terminado cuando | Prompt al agente | Commits |
 |---|-----------|-------|------------------|------------------|---------|

@@ -185,3 +185,123 @@ antes de la entrega.
   primera petición protegida. Revisar en F2 o F6.
 - **Decisiones pendientes de 3.6** (del traspaso 1 → 2): verificación de correo, recuperación de
   contraseña y el resto de vistas de Breeze en inglés.
+
+---
+
+# Traspaso del bloque 3 al bloque 4
+
+> Del Integrante A al Integrante B · 2026-11-08 · rama `bloque-3/equipos-reportes-cartera`, último
+> commit de código `6a0b42a`. La rama va **20 commits por delante de `origin`**: falta el `push`.
+> Fuentes: `CLAUDE.md`, `docs/especificacion.md` (spec-v1 + aclaraciones 1.1 y 1.2) y `docs/plan.md`.
+> La evidencia completa está en `docs/verificacion.md`, sección «Bloque 3». Aquí no hay contraseñas.
+
+## 1. Qué quedó hecho en el bloque 3
+
+| Tarea del plan | Estado | Commits |
+|----------------|--------|---------|
+| 3.1 L5 Equipos y visibilidad | Hecho: scopes `Cliente::visiblesPara`, `User::equipoDe` y `User::asignablesPor`; `ClientePolicy::gestionar` (404 con `denyAsNotFound`) aplicada con `can:` en las rutas, antes de validar; página «Mi equipo» | `510138c` |
+| 3.2 L6 Oportunidades (solo lectura) y reporte del mes | Hecho: servicio `App\Services\ReporteMes`, `ZonaGuatemala` (rango UTC del mes, sin `CONVERT_TZ`), `Dinero`; las cifras de control coinciden | `c73747a` (un solo commit, no los dos del plan) |
+| 3.3 A3 Clientes y cartera | Hecho: los 6 endpoints, `api/src/normalizar.js` con `node:test` sobre `docs/casos-normalizacion.json` | `7dbbf5f`, `e3d89a5` |
+| 3.4 `ConcurrenciaSeeder` y script de concurrencia | **Parcial.** Hecho `api/scripts/concurrencia.mjs` (tomas, cartera llena, altas con el mismo teléfono y dos `PATCH /etapa`). **Falta `ConcurrenciaSeeder`**, y con él A3.8 tal como lo pide la spec; tampoco se probaron A3.9 ni dos altas con el mismo NIT | `e3d89a5`, `c7869d3` |
+| 3.5 A4 Oportunidades, líneas, etapas y regla propia | Hecho, incluido `GET /productos` (A4.18) | `c7869d3` (un solo commit, no los dos del plan) |
+| 3.6 L7 Validación | **Parcial.** Paridad de NIT, teléfono y correo en las dos puertas (mismo JSON de casos); búsqueda del panel con `%` y `_` como texto y 400 a `?q[]=`; vista 400 en español. **Falta** la tabla cruzada de L7.2 y decidir las vistas de Breeze (ver sección 4) | `fe36cd2`, `c9e31bc` |
+| 3.7 F2 Cartera y disponibles | Hecho: F2.1–F2.5 en Edge sin ventana a 375 px contra la API real. **Falta** el hito I2 (un cliente asignado en el panel aparece en la SPA) | `6a0b42a` |
+| Evidencia del bloque 3 | Hecho | `9a4f4c2` |
+
+Pruebas al cerrar: `php artisan test` **110 pruebas, 741 aserciones, todas en verde**
+(eran 88); `npm test` en `api/`: **4 en verde**; `node scripts/concurrencia.mjs`: los cuatro casos
+dan lo esperado (1/4, 1/9, 1/4, 1/1 y 2 registros de historial).
+
+**Los commits que el plan pedía separados** (3.2 y 3.5) quedaron en uno cada uno. El script se llama
+`concurrencia.mjs` y no `concurrencia.js` como dice el plan (se pidió así).
+
+## 2. Cómo dejar la base como la semilla
+
+Varias pruebas cambian la base (el script de concurrencia toma clientes y crea un cliente y una
+oportunidad; las pruebas de la regla propia crean la «Gaseosa lata 355 ml»). Para volver al estado
+de la sección 11:
+
+```
+cd laravel
+php artisan migrate:fresh --seeder=VerificacionSeeder
+```
+
+Debe dar 7 cuentas, 5 productos, 21 clientes, 11 oportunidades, 43 registros de historial y
+4 actividades. `php artisan test` no toca `crm_agua`: usa `crm_agua_test`.
+
+Para el script de concurrencia, con la API en marcha y la semilla recién cargada (desde `api/`, en
+PowerShell): `$env:CLAVE_SEMILLA = '<contraseña del README>'; node scripts/concurrencia.mjs`. La
+contraseña no está escrita en el script (CLAUDE.md).
+
+**`api/.env` no existe en esta computadora.** Todo el bloque 3 se probó con las variables en el
+entorno del proceso. Para `npm start`, créelo desde `api/.env.example` (traspaso 2 → 3, paso 2).
+
+## 3. Qué hay listo para el bloque 4
+
+### API (`api/src`)
+
+| Endpoint | Estado | Para |
+|----------|--------|------|
+| `POST /auth/login` | Listo (bloque 2) | F1 |
+| `GET /productos` | Listo | F3 (agregar productos) |
+| `GET /clientes`, `POST /clientes`, `GET /clientes/disponibles`, `POST /clientes/:id/tomar`, `GET /clientes/:id`, `PATCH /clientes/:id` | Listos | F2 (hecho); F4 (elegir cliente) |
+| `GET /oportunidades?etapa=`, `POST /oportunidades`, `GET /oportunidades/:id`, `PATCH /oportunidades/:id`, `PATCH /oportunidades/:id/etapa`, `POST/PATCH/DELETE /oportunidades/:id/productos[/:lineaId]` | Listos | F3 |
+| `POST /clientes/:id/actividades`, `GET /actividades`, `PATCH /actividades/:id` | **Falta (A5)** | F4 |
+| `GET /reportes/resumen?mes=` | **Falta (A6)** | F5 |
+
+Piezas para reutilizar en A5 y A6:
+
+- `db.js`: `transaccion(trabajo)` (commit, rollback y `release()` en `finally`).
+- `middleware/cuerpo.js`: `exigirCuerpo` (400 sin cuerpo).
+- `router.param` para `:id` numérico → 400 (como en `clientes.js` y `oportunidades.js`).
+- Patrón 404 → 422 → (bloqueo) 409 → 422 de estado, comentado al inicio de `routes/oportunidades.js`.
+- **A6 debe dar lo mismo que el panel.** `laravel/app/Services/ReporteMes.php` es la referencia: mes
+  de Guatemala como rango UTC `[día 1 06:00, día 1 del mes siguiente 06:00)`, total con el precio de
+  la línea, pronóstico `ROUND(SUM(total × probabilidad / 100), 2)` en la base sobre las abiertas, sin
+  filtro de mes. Con la semilla: Valeria octubre 2 · 9250 · 2512.88 · 3 de 10.
+
+### SPA (`frontend/js`)
+
+- `util/dom.js`: `h()` crea elementos solo con nodos de texto (S7). Úselo en todas las vistas nuevas;
+  no hay `innerHTML` en el código.
+- `estado.js`: estado único; `actualizar(receta, { render })`. Al escribir en un campo, guarde el
+  valor con `{ render: false }` para no perder el cursor.
+- `api.js`: agregue aquí las funciones de A5 y A6. Un 401 **con token** vuelve al login con aviso; el
+  del login no.
+- `main.js`: router por hash (`#/cartera`, `#/disponibles`), delegación de eventos con `data-action` y
+  `data-form`, y descarte de respuestas de una sesión vieja (`sesion`).
+- `config.js`: URL de la API y origen, que deben coincidir con `PORT` y `CORS_ORIGIN` de `api/.env`.
+- Al abrir la SPA con un token guardado se valida con `GET /clientes` (no hay ruta «yo» en la spec).
+
+### Panel
+
+- `ReporteMes::resumenPorVendedor()` y `equipo()` sirven para cruzar A6 y F5 con el panel.
+- `MesRequest` valida `?mes=` (AAAA-MM; inválido vuelve con mensaje, nunca 500).
+
+## 4. Riesgos y pendientes
+
+- **MySQL 8.0.40 en lugar de 8.4 LTS.** Todo el bloque 3 se probó en 8.0.40 (confirmado con
+  `SELECT VERSION()`). Antes de la entrega hay que repetir en 8.4: `migrate:fresh --seeder=VerificacionSeeder`,
+  `php artisan test`, `npm test`, el script de concurrencia, las cifras de control y RP5. Puntos a
+  mirar en 8.4: el plugin de autenticación por omisión (`caching_sha2_password`; mysql2 y PDO lo
+  soportan, pero conviene comprobar que la API conecta), los `CHECK` con `REGEXP_LIKE`, `FOR SHARE`
+  (A4) y los códigos de error 1062 y 3819 que traducen la API y el panel.
+- **`ConcurrenciaSeeder` no existe** (tarea 3.4). Sin ella no se puede probar A3.8 como lo escribe la
+  spec. Tampoco se probaron A3.9 ni dos altas simultáneas con el mismo NIT (S8).
+- **Hito I2 sin probar:** asignar un cliente en el panel y verlo en la SPA.
+- **L7.2 sin tabla cruzada.** NIT, teléfono y correo son idénticos por construcción (mismo JSON de
+  casos), pero falta enviar los mismos datos de cliente a las dos puertas y anotar el resultado.
+- **L7.1 y vistas de Breeze:** siguen pendientes las decisiones de la tarea 3.6 (verificación de
+  correo, recuperación de contraseña y vistas en inglés). Las páginas 403 y 404 del panel siguen en
+  inglés; la 400 ya está en español.
+- **Vocabulario del panel:** las pantallas nuevas dicen «Pedidos por cerrar» y «Punto de venta»
+  (spec 1.2), pero las de clientes siguen diciendo «Clientes».
+- **`SectorSeeder` sigue vacío**: RP1–RP4 se probaron con un producto creado a mano (caja de 24).
+- **Decisiones de implementación que la spec no fija** (conviene confirmarlas o escribirlas en la spec):
+  orden de respuestas en A4 (404 → 422 de formato → 409 → 422 de estado); tomar un cliente propio da
+  409; mensajes sin texto en la spec (etapa inválida, `cliente_id`, `producto_id`, oportunidad
+  cerrada, transición no permitida); en el panel, un filtro con forma de arreglo y una etapa
+  inexistente en la lista de pedidos dan 400; un mes inválido vuelve con mensaje y acepta años
+  2000–2099.
+- **Bitácora de IA:** no se agregaron casos del bloque 3; quedan candidatos para que la pareja decida
+  si se registran.
