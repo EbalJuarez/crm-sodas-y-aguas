@@ -7,7 +7,7 @@
 > Fuente del núcleo: `docs/Proyecto_Final_CRM_Enunciado.pdf` (en este documento, «el enunciado»).
 > Si algo de aquí choca con el núcleo, gana el enunciado y se corrige esta especificación.
 
-**Estado:** spec-v1 (etiqueta en `90613b0`) · **Versión:** 1.1 (aclaraciones posteriores a la etiqueta en la sección 7)
+**Estado:** spec-v1 (etiqueta en `90613b0`) · **Versión:** 1.2 (aclaraciones posteriores a la etiqueta en la sección 7)
 
 ### Pendientes de este documento
 
@@ -145,6 +145,7 @@ con Hotel Los Pinos asignado).
 | L4.15 | La semilla | Alicia abre la lista de clientes (D4) | Hotel Los Pinos aparece asignado a Iván con la marca «vendedor desactivado» y no está entre los disponibles |
 | L4.16 | La semilla | Sandra reasigna Hotel Los Pinos a Carlos | se reasigna; Carlos queda con 10 de 10 |
 | L4.17 | La semilla | Alicia reactiva a Iván | Hotel Los Pinos sigue en su cartera (1 de 10) |
+| L4.18 | La semilla (versión 1.2) | Sergio (supervisor) busca la acción de eliminar un cliente o envía la petición a mano, aunque el cliente sea de su equipo o esté disponible | la lista no ofrece «Eliminar» y la petición responde 403; el cliente no cambia. Solo el administrador elimina clientes (L4.10, L4.11) |
 
 #### L5 — Equipos y visibilidad
 
@@ -185,6 +186,7 @@ con Hotel Los Pinos asignado).
 | A1.3 | La semilla | login con un correo inexistente y, aparte, con Valeria y clave incorrecta | ambas responden 401 con exactamente el mismo cuerpo |
 | A1.4 | La API en marcha | login sin `correo` o sin `clave` | 422 con `{ errores }` |
 | A1.5 | La API en marcha | login con JSON mal formado | 400 |
+| A1.7 | La API en marcha (versión 1.2) | login sin cuerpo (sin `Content-Length`, cuerpo vacío o un cuerpo que no es JSON); aparte, con `{}` | sin cuerpo: 400 con `{ error }`; con `{}`: 422 con un mensaje en `correo` y otro en `clave` (como A1.4) |
 | A1.6 | Un token de Valeria | se decodifica | algoritmo HS256, `sub` = id de Valeria, `exp` según `JWT_EXPIRES_IN` de `.env` |
 
 #### A2 — Middleware de autenticación
@@ -197,6 +199,12 @@ con Hotel Los Pinos asignado).
 
 > A2.3 «le cambia el rol» se prueba con una vendedora sin clientes (L2.13 impide cambiar el rol de
 > Valeria mientras tenga cartera): por ejemplo, después de liberar o reasignar sus clientes.
+
+> **Alcance del middleware (versión 1.2).** El middleware de A2 cubre **todo `/api`** salvo
+> `POST /api/auth/login`. Por eso una ruta que no existe bajo `/api` responde **401 sin token**
+> (A2.1: «cualquier ruta salvo el login») y **404 con un token válido** (A7.1). Un token válido sin
+> `sub` o con un `sub` que no es un entero positivo responde 401, nunca 500. Fuera de `/api` una
+> ruta inexistente responde 404.
 
 #### A3 — Clientes y cartera
 
@@ -484,7 +492,7 @@ Reglas de forma:
 | 200 | Lectura o modificación correcta |
 | 201 | Se creó un cliente, una oportunidad, una línea o una actividad |
 | 204 | Se quitó un producto de una oportunidad |
-| 400 | La petición no se puede interpretar: JSON mal formado, falta el cuerpo, un parámetro de **query** con un valor que no existe (`?etapa=xyz`, `?estado=x`, `?mes=2026-13`), un `:id` de ruta no numérico, o un `PATCH /clientes/:id` sin ningún campo editable (P-7) |
+| 400 | La petición no se puede interpretar: JSON mal formado, falta el cuerpo (en el login: sin cuerpo → 400, pero `{}` es un cuerpo y responde 422 por campo; A1.7), un parámetro de **query** con un valor que no existe (`?etapa=xyz`, `?estado=x`, `?mes=2026-13`), un `:id` de ruta no numérico, o un `PATCH /clientes/:id` sin ningún campo editable (P-7) |
 | 401 | Credenciales incorrectas; falta el token, está alterado o vencido, o la cuenta ya no es válida |
 | 403 | Solo en el login: credenciales correctas, pero la cuenta no es de vendedor o está desactivada |
 | 404 | No existe o es de otro vendedor (misma respuesta en los dos casos) |
@@ -591,7 +599,7 @@ La columna «Regla» remite a R1–R8 del enunciado, a S1–S8, a una decisión 
 | `telefono` | `CHAR(8)` | 8 dígitos, inicia 2–9; único | UQ, CK `telefono REGEXP '^[2-9][0-9]{7}$'`, LV + API (normalización) | R4 |
 | `correo` | `VARCHAR(150) NULL` | formato válido | LV, API | — |
 | — | — | duplicados con concurrencia | UQ es el árbitro final: el error `ER_DUP_ENTRY` se traduce a 409 (API) o a mensaje de campo (LV) | R4, S8 |
-| — | — | se elimina solo sin oportunidades | FK `oportunidades.cliente_id RESTRICT` + LV | L4 |
+| — | — | se elimina solo sin oportunidades, y solo lo elimina el administrador (el supervisor recibe 403) | FK `oportunidades.cliente_id RESTRICT` + LV (ruta con `rol:administrador`) | L4 |
 
 ### oportunidades
 
@@ -848,3 +856,4 @@ RP1, RP2 y RP3 van en la colección de Postman (A8.2).
 | 0.2 | — | Revisión: renumera S1–S8 según el enunciado; quita la contraseña pública; decide nombre, vocabulario, regla propia (venta por caja), D6 y mensaje del panel de D3; agrega `ConcurrenciaSeeder` (A3.8); completa criterios L2, L4, L5, L6, A3–A5, A8, F2 y el detalle de endpoints; agrega la columna «Regla» a la sección 4; separa 400 (query) de 422 (cuerpo); decide D5 (ignorar), P-6 (se puede desmarcar), P-7 (400) y P-8 (compactar `q`) |
 | 1.0 | `spec-v1` (por crear) | Cierra P-5 (las actividades no se tocan al reasignar; visibilidad por cartera actual), aclaración a R8 y excepción a A3.3 en D2; criterios A5.12–A5.14, A6.6, F4.4, F5.3; D3 solo con mensaje del panel. Sin pendientes |
 | 1.1 | — (`spec-v1` no se mueve) | Aclaración en 3.4: cuándo se quita el prefijo `+502`/`502` del teléfono (solo si empieza con `+502`, o si quedan exactamente 11 dígitos que empiezan con 502), con ejemplos. No cambia ningún criterio de la semilla |
+| 1.2 | — (`spec-v1` no se mueve; cambio sobre v1, no es v2) | Aclaraciones del bloque 2: login sin cuerpo = 400 y `{}` = 422 por campo (A1.7 y 3.3); el middleware cubre todo `/api` salvo `POST /api/auth/login`, y una ruta inexistente responde 401 sin token y 404 con token (nota de A2); solo el administrador elimina clientes, el supervisor recibe 403 (L4.18 y sección 4, como dice L4 del enunciado). No cambia ningún criterio de la semilla ni las cifras de control |
