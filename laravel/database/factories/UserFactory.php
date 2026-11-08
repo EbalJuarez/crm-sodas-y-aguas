@@ -20,6 +20,9 @@ class UserFactory extends Factory
     /**
      * Define the model's default state.
      *
+     * Por omisión, un administrador activo: el CHECK users_supervisor_segun_rol exige supervisor
+     * a los vendedores, y el rol por omisión de la columna (vendedor) no lo tendría.
+     *
      * @return array<string, mixed>
      */
     public function definition(): array
@@ -30,7 +33,32 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'rol' => 'administrador',
+            'supervisor_id' => null,
+            'activo' => true,
         ];
+    }
+
+    /**
+     * Un supervisor activo, sin supervisor propio.
+     */
+    public function supervisor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'rol' => 'supervisor',
+            'supervisor_id' => null,
+        ]);
+    }
+
+    /**
+     * Un vendedor del equipo de $supervisor (se crea uno si no se pasa).
+     */
+    public function vendedor(?User $supervisor = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'rol' => 'vendedor',
+            'supervisor_id' => $supervisor?->id ?? User::factory()->supervisor(),
+        ]);
     }
 
     /**
