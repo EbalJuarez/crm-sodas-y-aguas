@@ -211,6 +211,17 @@ navegador; **lee el diff completo** (`git diff spec-v1..HEAD`). Anota lo encontr
 | 3.6 | L7 | Revisión de validación en el panel y prueba cruzada L7.2 | L7.1 en todos los formularios; L7.2 con los mismos datos en el panel y en la API | [E] «Revisa todos los FormRequest contra 3.4: mensajes en español, de usted, junto a cada campo y conservando lo escrito. Haz una tabla de casos de L7.2 y su resultado en las dos puertas.» | `laravel: validacion en el servidor` |
 | 3.7 | F2 | Cartera, alta, disponibles y tomar | F2.1–F2.5 contra la API real; un cliente asignado en el panel aparece en la SPA | [E] «Implementa F2: cartera con búsqueda en el servidor y "N de 10", alta con errores del servidor junto a cada campo, disponibles con la acción de tomar y el mensaje del 409.» | `spa: cartera y disponibles` |
 
+**Decisiones pendientes para la tarea 3.6 (L7)** (anotadas el 2026-11-08, al cerrar L2):
+
+- **Verificación de correo.** El panel ya no exige `verified` (las cuentas las crea el administrador),
+  pero siguen las rutas, controladores y vistas de verificación de Breeze (`verify-email`,
+  `email/verification-notification`) y `EmailVerificationTest`. Decidir si se quitan.
+- **Recuperación de contraseña.** Siguen `forgot-password` y `reset-password`, que envían un correo
+  que no está configurado. Decidir si se quitan (y el administrador cambia la contraseña desde
+  «Cuentas») o se configura el correo.
+- **Textos en inglés.** El login y la navegación ya están en español; el resto de vistas de Breeze
+  (perfil, recuperación, confirmación de contraseña, inicio) se traducen en L7.
+
 **Traspaso 3 → 4 (Integrante B):** compara el reporte del panel con las cifras de control (L6.5–L6.7);
 corre las peticiones de A3 y A4 en Postman y `scripts/concurrencia.js`; recorre F2; asigna un cliente en
 el panel y lo ve en la SPA; **lee el diff completo** del bloque 3. Commit `docs: verificacion del bloque 3`.
