@@ -36,13 +36,16 @@ marcada en Git con la etiqueta `spec-v1`.
 
 ## Regla propia del sector
 
-> **Borrador — la versión vinculante es la de `docs/especificacion.md`.** Cuando la especificación
-> la defina, este apartado se actualiza para coincidir con ella.
+> **Resumen — la versión vinculante es la sección 6 de `docs/especificacion.md`.** Si cambia allá,
+> este apartado se actualiza para coincidir.
 
-Punto de partida (ejemplo del enunciado para distribuidoras): *a un cliente con NIT de empresa
-(no CF) no se le gana un pedido por debajo de un monto mínimo.*
+**Venta por caja completa:** un producto con `productos.unidades_por_caja` (vacío = por unidad) solo
+entra a un pedido en múltiplos de ese número. La línea copia el valor al agregarse
+(`oportunidad_productos.unidades_por_caja`, como `precio_unitario`). Se cumple con un `CHECK`
+(`cantidad % unidades_por_caja = 0`) y en la API al agregar o cambiar la cantidad (422 en `cantidad`).
+El panel solo administra la columna en el catálogo. El contrato no cambia.
 
-Condiciones que debe cumplir, sea cual sea la redacción final:
+Condiciones que cumple (y que cualquier cambio a la regla debe seguir cumpliendo):
 
 - Se cumple en el servidor, en **las dos puertas** donde aplique, y en la base si es posible.
 - Tiene criterios Dado / Cuando / Entonces en la especificación y una prueba en la colección de Postman.
@@ -120,8 +123,8 @@ Condiciones que debe cumplir, sea cual sea la redacción final:
   valores reales. `JWT_SECRET` de al menos 32 caracteres aleatorios.
 - Nunca hacer commit de `vendor/`, `node_modules/` ni archivos con credenciales. Si un secreto se
   filtró, borrarlo no basta: hay que cambiarlo.
-- La contraseña pública de la semilla (`Ventas2026`) solo aparece en las semillas, el README y la
-  colección de Postman.
+- La contraseña pública de las semillas (sección 11 del enunciado) solo aparece en las semillas, el
+  README y la colección de Postman; en ningún otro archivo (tampoco en `docs/` ni en este).
 
 ## Semillas
 
