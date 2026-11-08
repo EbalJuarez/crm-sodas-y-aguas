@@ -291,6 +291,58 @@ class ClientesTest extends TestCase
             ->assertSessionHasErrors(['nit', 'telefono']);
     }
 
+    public function test_editar_exige_los_campos_y_responde_en_espanol(): void
+    {
+        $cliente = $this->crearCliente($this->valeria->id, ['nombre' => 'Ferretería Xela', 'nit' => '98765434', 'telefono' => '77612345']);
+        $base = ['nombre' => 'Ferretería Xela', 'nit' => '98765434', 'telefono' => '77612345', 'correo' => ''];
+
+        $casos = [
+            'nombre' => ['', 'Escriba el nombre del cliente.'],
+            'nit' => ['', 'Escriba un NIT válido (con su dígito verificador) o CF.'],
+            'telefono' => ['', 'Escriba un teléfono de Guatemala de 8 dígitos.'],
+        ];
+
+        foreach ($casos as $campo => [$valor, $mensaje]) {
+            $respuesta = $this->actingAs($this->alicia)->from(route('clientes.edit', $cliente))
+                ->put(route('clientes.update', $cliente), array_merge($base, [$campo => $valor]))
+                ->assertRedirect(route('clientes.edit', $cliente))
+                ->assertSessionHasErrors([$campo => $mensaje]);
+            if ($campo !== 'nombre') {
+                $respuesta->assertSessionHasInput('nombre', 'Ferretería Xela');
+            }
+            $this->assertCount(1, session('errors')->get($campo), "Un solo mensaje para {$campo}");
+        }
+
+        $this->put(route('clientes.update', $cliente), array_merge($base, ['nombre' => '   ']))
+            ->assertSessionHasErrors(['nombre' => 'Escriba el nombre del cliente.']);
+        $this->put(route('clientes.update', $cliente), array_merge($base, ['nit' => '1234567890123']))
+            ->assertSessionHasErrors(['nit' => 'Escriba un NIT válido (con su dígito verificador) o CF.']);
+        $this->assertSame('Ferretería Xela', $cliente->fresh()->nombre);
+
+        // Un mensaje de respaldo (regla sin mensaje propio) también sale en español.
+        // Un arreglo en lugar de texto no da 500: vuelve con el mensaje del campo.
+        $this->put(route('clientes.update', $cliente), array_merge($base, ['nombre' => ['x'], 'nit' => ['x'], 'telefono' => ['x']]))
+            ->assertSessionHasErrors([
+                'nombre' => 'Escriba el nombre del cliente.',
+                'nit' => 'Escriba un NIT válido (con su dígito verificador) o CF.',
+                'telefono' => 'Escriba un teléfono de Guatemala de 8 dígitos.',
+            ]);
+        $this->assertSame('Escriba un texto en el nombre.', __('validation.string', ['attribute' => __('validation.attributes.nombre')]));
+    }
+
+    public function test_la_paginacion_esta_en_espanol(): void
+    {
+        for ($i = 0; $i < 21; $i++) {
+            $this->crearCliente();
+        }
+
+        $this->actingAs($this->alicia)->get(route('clientes.index'))
+            ->assertOk()
+            ->assertSee('Mostrando')
+            ->assertSee('resultados')
+            ->assertDontSee('Showing');
+    }
+
     public function test_solo_el_administrador_elimina_clientes(): void
     {
         $delEquipo = $this->crearCliente($this->valeria->id);

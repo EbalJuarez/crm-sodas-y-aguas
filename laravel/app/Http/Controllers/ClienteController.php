@@ -81,12 +81,8 @@ class ClienteController extends Controller
         $this->autorizarVisibilidad($request->user(), $cliente);
         $datos = $request->validated();
 
-        if ($datos === []) {
-            abort(400);
-        }
-
         try {
-            $this->asignarDatos($cliente, $datos, parcial: true);
+            $this->asignarDatos($cliente, $datos);
             $cliente->save();
         } catch (QueryException $exception) {
             $this->lanzarErrorDuplicado($exception, $datos);
@@ -183,18 +179,13 @@ class ClienteController extends Controller
         return redirect()->route('clientes.index')->with('status', 'Cliente eliminado.');
     }
 
-    private function asignarDatos(Cliente $cliente, array $datos, bool $parcial = false): void
+    private function asignarDatos(Cliente $cliente, array $datos): void
     {
-        foreach (['nombre', 'telefono', 'correo'] as $campo) {
-            if ($parcial && ! array_key_exists($campo, $datos)) {
-                continue;
-            }
-            $cliente->{$campo} = $datos[$campo] ?? null;
-        }
-
-        if (! $parcial || array_key_exists('nit', $datos)) {
-            $cliente->nit = ($datos['nit'] ?? null) === 'CF' ? null : ($datos['nit'] ?? null);
-        }
+        $cliente->nombre = $datos['nombre'];
+        $cliente->telefono = $datos['telefono'];
+        $cliente->correo = $datos['correo'] ?? null;
+        // CF se guarda como NULL (R4).
+        $cliente->nit = $datos['nit'] === 'CF' ? null : $datos['nit'];
     }
 
     private function aplicarVisibilidad($consulta, User $usuario): void
