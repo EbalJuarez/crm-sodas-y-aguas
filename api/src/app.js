@@ -4,6 +4,8 @@ import { autenticacion } from './middleware/autenticacion.js';
 import { errorHandler, notFoundHandler } from './middleware/errores.js';
 import authRouter from './routes/auth.js';
 import clientesRouter from './routes/clientes.js';
+import oportunidadesRouter from './routes/oportunidades.js';
+import productosRouter from './routes/productos.js';
 
 const app = express();
 const corsOrigin = process.env.CORS_ORIGIN;
@@ -37,6 +39,8 @@ app.use('/api/auth', authRouter);
 // (sin token: 401; con token: sigue hasta el 404). Los routers protegidos se montan después.
 app.use('/api', autenticacion);
 app.use('/api/clientes', clientesRouter);
+app.use('/api/productos', productosRouter);
+app.use('/api/oportunidades', oportunidadesRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
