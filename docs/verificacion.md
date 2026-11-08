@@ -165,6 +165,85 @@ recuperación y cambio de contraseña, perfil) y los dos ejemplos; todas pasan.
   un commit, muéstrame `git diff` y espera mi OK. Antes de cada commit, compara su contenido con lo que
   promete el mensaje.»
 
-### Casos 2 y 3
+> **Nota sobre los commits del bloque 2.** El bloque 2 llegó primero en un commit local, `e3273d5`
+> («Implementa catálogo, clientes y acceso API»), **sin prefijo y con todo el bloque en uno solo**. Ese
+> commit se descartó al reiniciar la rama `bloque-3/equipos-reportes-cartera` a
+> `origin/feat/bloque-2-api-base`, y hoy no está en ninguna rama (solo en el reflog local). El mismo
+> código (diff vacío contra `e3273d5`) está en cinco commits con prefijo: `ab90dd6`, `3eddf1d`,
+> `b5da01f`, `f63434a` y `f897d78`. Este último usa el prefijo `frontend:` en lugar de `spa:`
+> (plan, sección 4). Los casos 2 a 5 citan esos commits, que son los que están en el historial.
+>
+> **Cómo se detectaron los casos 2 a 5:** todos por una auditoría de solo lectura del bloque 2
+> (2026-11-08) que probó la API real con `curl.exe`, el panel con peticiones HTTP y la SPA en un
+> navegador. Las pruebas automáticas existentes (81, todas en verde) **no** detectaron ninguno. Cada
+> corrección agregó la prueba que faltaba.
 
-_Pendiente._
+### Caso 2 — Middleware de autenticación escrito pero nunca montado
+
+- **Fecha:** 2026-11-08 · **Integrante:** B
+- **Qué propuso el agente:** escribió `api/src/middleware/autenticacion.js` (verifica el JWT con
+  HS256 y relee al usuario), pero no lo importó ni lo montó en `api/src/app.js`. El commit que lo trajo
+  se llama «api: autenticacion JWT y middleware de vendedores», y el de `e3273d5` decía «acceso API».
+- **Por qué es incorrecto:** ninguna ruta quedaba protegida, así que A2.1–A2.3 no se cumplían:
+  `GET /api/clientes` sin token respondía 404 en vez de 401. El mensaje del commit prometía algo que el
+  código no hacía (regla de `CLAUDE.md`: comparar el commit con lo que promete el mensaje).
+- **Cómo se detectó:** auditoría de solo lectura; probó la API real y encontró 404 donde esperaba 401.
+  `grep autenticacion api/src` solo encontraba la definición. Las pruebas automáticas no cubren la API.
+- **Commit que lo introdujo:** `3eddf1d` (en el historial descartado, `e3273d5`).
+- **Corrección:** commit `bfcdee2` («api: montar middleware de autenticación (A2)»). Monta el
+  middleware sobre `/api` salvo `POST /api/auth/login` y responde 401 a un token sin `sub` o con `sub`
+  no numérico (antes daba 500). Probado contra la API real.
+- **Lección:** un middleware solo cuenta si una petición real lo atraviesa. La evidencia de A2 se toma
+  contra la API levantada, no leyendo el archivo.
+
+### Caso 3 — Validar antes de autorizar confirmaba que un cliente ajeno existía
+
+- **Fecha:** 2026-11-08 · **Integrante:** B
+- **Qué propuso el agente:** en `ClienteController::update`, la comprobación de visibilidad
+  (`autorizarVisibilidad`, 404) corría dentro del método. Laravel resuelve y valida
+  `GuardarClienteRequest` antes de entrar al método, y su `authorize()` devolvía siempre `true`.
+- **Por qué es incorrecto:** un supervisor que enviaba un `PUT` con datos inválidos sobre un cliente
+  de otro equipo recibía 302 con errores; con un id inexistente recibía 404. La diferencia confirma
+  que el cliente existe, y viola R2 y S5 («lo ajeno responde 404»).
+- **Cómo se detectó:** auditoría de solo lectura. Con datos válidos el resultado era 404, pero con
+  datos inválidos era 302. Las pruebas existentes solo probaban la URL ajena con datos válidos.
+- **Commit que lo introdujo:** `f63434a`.
+- **Corrección:** commit `241d490` («laravel: autorizar antes de validar»).
+  `GuardarClienteRequest::authorize()` responde 404 antes de validar, con la regla compartida
+  `Cliente::esVisiblePara()`. Se revisaron los demás FormRequest y acciones con `validate()`.
+- **Lección:** en un FormRequest, la autorización va en `authorize()`; el controlador llega tarde.
+
+### Caso 4 — El supervisor podía eliminar clientes
+
+- **Fecha:** 2026-11-08 · **Integrante:** B
+- **Qué propuso el agente:** puso la ruta `DELETE /clientes/{cliente}` en el grupo
+  `rol:administrador,supervisor` y mostró el botón «Eliminar» a los dos roles.
+- **Por qué es incorrecto:** el enunciado (L4) dice «**El administrador** elimina un cliente solo si
+  no tiene oportunidades», y en la tabla de roles el supervisor no tiene esa acción. spec-v1 solo lo
+  prevé para Alicia (L4.10, L4.11). El agente lo supuso sin preguntar.
+- **Cómo se detectó:** auditoría de solo lectura. Sergio eliminó un cliente disponible desde el panel
+  (respuesta «Cliente eliminado.»). Las pruebas existentes solo probaban la eliminación como Alicia.
+- **Commit que lo introdujo:** `f63434a`.
+- **Corrección:** commit `62b4f31` («laravel: solo el administrador elimina clientes (L4)»): ruta en
+  el grupo `rol:administrador` (supervisor: 403), comprobación en `destroy()` y botón solo para el
+  administrador. La spec lo deja escrito en la versión 1.2 (L4.18), commit `563e6ce`.
+- **Lección:** cuando la spec nombra un actor («Alicia lo elimina»), la ruta se restringe a ese rol y
+  se prueba también con el rol que no debe poder.
+
+### Caso 5 — Al editar, el nombre vacío se guardaba
+
+- **Fecha:** 2026-11-08 · **Integrante:** B
+- **Qué propuso el agente:** en `GuardarClienteRequest`, al editar, los campos eran `sometimes` en vez
+  de `required`, copiando P-7 (`PATCH` parcial de la API) a un formulario del panel que siempre envía
+  todos los campos. `prepareForValidation` convertía el nombre vacío en `''`, que `sometimes` dejaba pasar.
+- **Por qué es incorrecto:** la spec 3.4 dice que `clientes.nombre` es obligatorio, de 1 a 150
+  caracteres. Ferretería Xela quedó guardada con nombre vacío. Además, un NIT o teléfono vacío mostraba
+  «The nit field must be a string.», en inglés (L7.1).
+- **Cómo se detectó:** auditoría de solo lectura (`PUT` con `nombre=""`, y en la base `"nombre":""`).
+  Al escribir la prueba de la corrección apareció otro defecto, esta vez detectado **por prueba**: un
+  campo enviado como arreglo daba 500 («Array to string conversion»).
+- **Commit que lo introdujo:** `f63434a`.
+- **Corrección:** commit `1fff582` («laravel: nombre obligatorio al editar y mensajes en español
+  (L7)»): campos obligatorios también al editar, `bail` (un mensaje por campo), solo se normalizan
+  textos, y se agregan `lang/es` y `APP_LOCALE=es`.
+- **Lección:** una regla de una puerta (P-7 es de la API) no se copia a la otra sin que la spec lo diga.
