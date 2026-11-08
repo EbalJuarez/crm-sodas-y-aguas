@@ -165,7 +165,8 @@ class ClienteController extends Controller
 
     public function destroy(Request $request, Cliente $cliente): RedirectResponse
     {
-        $this->autorizarVisibilidad($request->user(), $cliente);
+        // La ruta ya exige rol:administrador; se repite aquí por si la acción se monta en otra ruta.
+        abort_unless($request->user()->esAdministrador(), 403);
 
         DB::transaction(function () use ($cliente): void {
             $bloqueado = Cliente::whereKey($cliente->id)->lockForUpdate()->firstOrFail();

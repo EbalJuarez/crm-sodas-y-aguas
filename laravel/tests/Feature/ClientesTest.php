@@ -291,6 +291,24 @@ class ClientesTest extends TestCase
             ->assertSessionHasErrors(['nit', 'telefono']);
     }
 
+    public function test_solo_el_administrador_elimina_clientes(): void
+    {
+        $delEquipo = $this->crearCliente($this->valeria->id);
+        $disponible = $this->crearCliente();
+
+        $this->actingAs($this->sergio)->get(route('clientes.index'))
+            ->assertOk()
+            ->assertDontSee('Eliminar');
+        $this->delete(route('clientes.destroy', $delEquipo))->assertForbidden();
+        $this->delete(route('clientes.destroy', $disponible))->assertForbidden();
+        $this->assertNotNull($delEquipo->fresh());
+        $this->assertNotNull($disponible->fresh());
+
+        $this->actingAs($this->alicia)->get(route('clientes.index'))->assertSee('Eliminar');
+        $this->delete(route('clientes.destroy', $disponible))->assertSessionHasNoErrors();
+        $this->assertNull($disponible->fresh());
+    }
+
     public function test_las_demas_puertas_con_formrequest_rechazan_al_rol_antes_de_validar(): void
     {
         $producto = DB::table('productos')->insertGetId(['nombre' => 'Producto X', 'precio' => 10, 'created_at' => now(), 'updated_at' => now()]);

@@ -28,10 +28,13 @@ Route::middleware(['auth', 'rol:administrador'])->group(function () {
     Route::resource('productos', ProductoController::class)->except(['show', 'destroy']);
     Route::patch('/productos/{producto}/estado', [ProductoController::class, 'cambiarEstado'])
         ->name('productos.estado');
+
+    // L4 (enunciado): solo el administrador elimina clientes; un supervisor recibe 403.
+    Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
 });
 
 Route::middleware(['auth', 'rol:administrador,supervisor'])->group(function () {
-    Route::resource('clientes', ClienteController::class)->except(['show']);
+    Route::resource('clientes', ClienteController::class)->except(['show', 'destroy']);
     Route::patch('/clientes/{cliente}/asignar', [ClienteController::class, 'asignar'])
         ->name('clientes.asignar');
     Route::patch('/clientes/{cliente}/liberar', [ClienteController::class, 'liberar'])

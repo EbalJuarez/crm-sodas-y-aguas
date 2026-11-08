@@ -88,11 +88,13 @@
                                             <button type="submit" class="text-indigo-600 hover:text-indigo-900">Liberar</button>
                                         </form>
                                     @endif
-                                    <form method="POST" action="{{ route('clientes.destroy', $cliente) }}" class="inline ms-3">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900">Eliminar</button>
-                                    </form>
+                                    @if (Auth::user()->esAdministrador())
+                                        <form method="POST" action="{{ route('clientes.destroy', $cliente) }}" class="inline ms-3">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-900">Eliminar</button>
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
