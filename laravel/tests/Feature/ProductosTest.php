@@ -73,6 +73,30 @@ class ProductosTest extends TestCase
         }
     }
 
+    public function test_precio_maximo_y_un_solo_mensaje_por_campo(): void
+    {
+        $casos = [
+            '100000000' => 'El precio no puede ser mayor que Q99,999,999.99.',
+            'abc' => 'Escriba un precio válido.',
+            '0' => 'El precio debe ser mayor que cero.',
+            '10.999' => 'Escriba el precio con dos decimales como máximo (por ejemplo, 1200.50).',
+        ];
+
+        foreach ($casos as $precio => $mensaje) {
+            $this->actingAs($this->alicia)
+                ->from(route('productos.create'))
+                ->post(route('productos.store'), $this->datos(['precio' => (string) $precio]))
+                ->assertRedirect(route('productos.create'))
+                ->assertSessionHasErrors(['precio' => $mensaje])
+                ->assertSessionHasInput('precio', (string) $precio);
+            $this->assertCount(1, session('errors')->get('precio'), "Un solo mensaje para {$precio}");
+        }
+
+        $this->post(route('productos.store'), $this->datos(['nombre' => 'Producto tope', 'precio' => '99999999.99']))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('99999999.99', Producto::where('nombre', 'Producto tope')->value('precio'));
+    }
+
     public function test_rechaza_nombres_duplicados(): void
     {
         Producto::create($this->datos());
