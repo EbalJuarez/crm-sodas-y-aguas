@@ -7,6 +7,7 @@ import actividadesRouter from './routes/actividades.js';
 import clientesRouter from './routes/clientes.js';
 import oportunidadesRouter from './routes/oportunidades.js';
 import productosRouter from './routes/productos.js';
+import reportesRouter from './routes/reportes.js';
 
 const app = express();
 const corsOrigin = process.env.CORS_ORIGIN;
@@ -43,6 +44,7 @@ app.use('/api', actividadesRouter);
 app.use('/api/clientes', clientesRouter);
 app.use('/api/productos', productosRouter);
 app.use('/api/oportunidades', oportunidadesRouter);
+app.use('/api', reportesRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
