@@ -1,12 +1,7 @@
 <?php
 
-/*
- * Mensajes de validación en español, tratando de usted (CLAUDE.md, L7.1).
- * Son el respaldo: cada FormRequest define en messages() los mensajes de la spec (3.4);
- * estos solo aparecen para una regla que el FormRequest no personalizó.
- */
+/* Mensajes de validación en español, tratando de usted. */
 return [
-
     'accepted' => 'Debe aceptar el campo :attribute.',
     'accepted_if' => 'Debe aceptar el campo :attribute cuando :other sea :value.',
     'active_url' => 'Escriba una URL válida en :attribute.',
@@ -31,7 +26,7 @@ return [
     'can' => 'El campo :attribute contiene un valor no autorizado.',
     'confirmed' => 'La confirmación de :attribute no coincide.',
     'contains' => 'Al campo :attribute le falta un valor obligatorio.',
-    'current_password' => 'La contraseña es incorrecta.',
+    'current_password' => 'La contraseña actual no es correcta.',
     'date' => 'Escriba una fecha válida en :attribute.',
     'date_equals' => 'Escriba en :attribute una fecha igual a :date.',
     'date_format' => 'Escriba :attribute con el formato :format.',
@@ -161,14 +156,13 @@ return [
     'url' => 'Escriba una URL válida en :attribute.',
     'ulid' => 'El campo :attribute debe ser un ULID válido.',
     'uuid' => 'El campo :attribute debe ser un UUID válido.',
-
     'custom' => [],
-
-    // Nombres de los campos en los mensajes de respaldo.
     'attributes' => [
         'name' => 'el nombre',
         'email' => 'el correo',
         'password' => 'la contraseña',
+        'password_confirmation' => 'la confirmación de contraseña',
+        'current_password' => 'la contraseña actual',
         'rol' => 'el rol',
         'supervisor_id' => 'el supervisor',
         'activo' => 'el estado',
@@ -181,5 +175,4 @@ return [
         'vendedor_id' => 'el vendedor',
         'q' => 'la búsqueda',
     ],
-
 ];
