@@ -39,6 +39,18 @@ Evidencia adicional obtenida sobre `crm_agua_test`, sin tocar `crm_agua`:
   La prueba Laravel verifica que Sergio recibe `403` tanto para un cliente existente como para el id
   inexistente `999999`; Alicia conserva el borrado permitido y el `404` administrativo para ids no encontrados.
 
+## Cierre A8 y C.1
+
+- **A8.1:** `README.md` documenta requisitos, bases, variables, migraciones, las tres piezas, pruebas,
+  cuentas de semilla y la tabla completa de endpoints con sus errores principales.
+- **A8.2:** `docs/api.postman_collection.json` es JSON válido de Postman v2.1, tiene variables para la
+  URL, token e ids, una petición por endpoint y scripts que comprueban códigos de éxito y error. La
+  importación y ejecución dentro de la aplicación Postman queda como comprobación manual de la pareja.
+- **C.1:** en `crm_agua_test`, `migrate:fresh --seed` ejecutó ambas semillas. El resultado fue 10 usuarios,
+  11 productos, 27 clientes, 13 oportunidades, 17 líneas, 47 historiales y 8 actividades; hay una
+  oportunidad en cada una de las seis etapas, dos productos con caja completa y cero líneas con múltiplo
+  inválido. Ningún vendedor superó 10 clientes y no se repitieron correos, NIT ni teléfonos.
+
 ## Matriz de criterios y evidencia (P3)
 
 | Criterio | Evidencia | Resultado |
@@ -229,8 +241,10 @@ La cartera de Iván Toj (desactivado) es 1 (Hotel Los Pinos); el enunciado no da
 | Instalación | 1 | 450.00 | 1 · Q450.00 | ✅ |
 | Soporte anual | 3 | 10800.00 | 3 · Q10,800.00 | ✅ |
 
-`php artisan migrate:fresh --seed` carga `VerificacionSeeder` y `SectorSeeder` (vacío) y no crea
-ningún usuario de prueba: 7 usuarios, todos de la semilla (L1.5).
+`php artisan migrate:fresh --seed` carga `VerificacionSeeder` y `SectorSeeder` sin pasos manuales. La
+semilla completa deja 10 usuarios, 11 productos, 27 clientes, 13 oportunidades, 17 líneas, 47
+historiales y 8 actividades. La comprobación SQL mostró las seis etapas y ningún vendedor por encima
+de 10 clientes; la semilla de verificación sola conserva los conteos oficiales de L1.4.
 
 ### L2 — Cuentas y roles
 
@@ -730,7 +744,8 @@ Carlos crea otro (lleno)                                   409  {"error":"Su car
 ### A4 — Oportunidades, etapas y regla propia (API real, `curl.exe`)
 
 La Gaseosa lata 355 ml (caja de 24) se creó con `Producto::create` (el mismo modelo que usa el
-formulario del catálogo), porque `SectorSeeder` todavía está vacío. Los conteos de historial se
+formulario del catálogo), porque la prueba RP1–RP4 se ejecutó antes de completar `SectorSeeder`. La
+semilla sectorial actual también contiene productos con caja 24 y líneas con cantidades válidas. Los
 leyeron con SQL antes y después de cada rechazo.
 
 ```
@@ -1204,3 +1219,9 @@ OK (110 tests, 741 assertions)
   (L7)»): campos obligatorios también al editar, `bail` (un mensaje por campo), solo se normalizan
   textos, y se agregan `lang/es` y `APP_LOCALE=es`.
 - **Lección:** una regla de una puerta (P-7 es de la API) no se copia a la otra sin que la spec lo diga.
+
+### Cierre de la bitácora
+
+Los cinco casos anteriores cumplen P5: cada uno identifica la propuesta incorrecta, la observación que
+la descubrió, el commit que la introdujo, el commit corrector y la lección aplicable. No se agregan casos
+sin evidencia de la historia real del repositorio.
