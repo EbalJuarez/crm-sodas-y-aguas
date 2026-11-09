@@ -138,3 +138,25 @@ export function eliminarProductoOportunidad(token, oportunidadId, lineaId) {
         method: 'DELETE', token,
     });
 }
+
+export function listarActividades(token, estado = '') {
+    const consulta = estado === '' ? '' : `?estado=${encodeURIComponent(estado)}`;
+    return solicitar(`/actividades${consulta}`, { token });
+}
+
+export function crearActividad(token, clienteId, datos) {
+    return solicitar(`/clientes/${encodeURIComponent(clienteId)}/actividades`, {
+        method: 'POST', body: datos, token,
+    });
+}
+
+export function cambiarActividad(token, id, completada) {
+    return solicitar(`/actividades/${encodeURIComponent(id)}`, {
+        method: 'PATCH', body: { completada }, token,
+    });
+}
+
+export function obtenerResumen(token, mes = '') {
+    const consulta = mes === '' ? '' : `?mes=${encodeURIComponent(mes)}`;
+    return solicitar(`/reportes/resumen${consulta}`, { token });
+}

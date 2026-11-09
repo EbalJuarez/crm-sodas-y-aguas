@@ -37,7 +37,9 @@ function pestanas(vista) {
             h('ul', { class: 'nav nav-underline' },
                 pestana('cartera', 'Mi cartera'),
                 pestana('disponibles', 'Disponibles'),
-                pestana('embudo', 'Pedidos por cerrar'))));
+                pestana('embudo', 'Pedidos por cerrar'),
+                pestana('actividades', 'Actividades'),
+                pestana('resumen', 'Resumen'))));
 }
 
 /** Con otro origen (p. ej. localhost:5500) CORS bloquea todas las peticiones: se explica aquí. */

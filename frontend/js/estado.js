@@ -66,6 +66,16 @@ export function detalleVacio() {
     };
 }
 
+export function nuevaActividadVacia() {
+    return {
+        abierta: false,
+        datos: { cliente_id: '', tipo: 'llamada', descripcion: '', vence_en: '' },
+        errores: {},
+        error: null,
+        enviando: false,
+    };
+}
+
 /** vista: 'login' | 'verificando' | 'cartera' | 'disponibles' | 'embudo' | 'detalle'. */
 export function estadoInicial(token) {
     return {
@@ -82,6 +92,11 @@ export function estadoInicial(token) {
             lista: [], cargando: false, cargada: false, error: null, nueva: nuevaOportunidadVacia(),
         },
         detalle: detalleVacio(),
+        actividades: {
+            lista: [], filtro: '', cargando: false, cargada: false, error: null,
+            nueva: nuevaActividadVacia(), actualizando: null,
+        },
+        reporte: { mes: '', datos: null, cargando: false, cargado: false, error: null },
     };
 }
 

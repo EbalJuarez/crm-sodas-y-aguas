@@ -15,6 +15,10 @@ import {
     agregarProductoOportunidad,
     cambiarCantidadProducto,
     eliminarProductoOportunidad,
+    listarActividades,
+    crearActividad,
+    cambiarActividad,
+    obtenerResumen,
     tomarCliente,
 } from './api.js';
 import { ESPERA_BUSQUEDA_MS } from './config.js';
@@ -23,6 +27,7 @@ import {
     altaVacia,
     detalleVacio,
     nuevaOportunidadVacia,
+    nuevaActividadVacia,
     borrarToken,
     estadoInicial,
     guardarToken,
@@ -33,8 +38,11 @@ import { crearVistaCartera } from './vistas/cartera.js';
 import { crearVistaDisponibles } from './vistas/disponibles.js';
 import { crearVistaEmbudo } from './vistas/embudo.js';
 import { crearVistaDetalle } from './vistas/detalle-oportunidad.js';
+import { crearVistaActividades } from './vistas/actividades.js';
+import { crearVistaResumen } from './vistas/resumen.js';
 import { crearLayout, crearVistaVerificando } from './vistas/layout.js';
 import { crearVistaLogin } from './vistas/login.js';
+import { fechaLocalGuatemalaAISO, mesActualGuatemala } from './util/fechas.js';
 
 const app = document.querySelector('#app');
 const MENSAJE_SESION_VENCIDA = 'Su sesión venció o su cuenta ya no tiene acceso. Inicie sesión nuevamente.';
@@ -56,6 +64,8 @@ function vistaActual(estado) {
         case 'disponibles': return crearLayout(estado, crearVistaDisponibles(estado));
         case 'embudo': return crearLayout(estado, crearVistaEmbudo(estado));
         case 'detalle': return crearLayout(estado, crearVistaDetalle(estado));
+        case 'actividades': return crearLayout(estado, crearVistaActividades(estado));
+        case 'resumen': return crearLayout(estado, crearVistaResumen(estado));
         default: return crearLayout(estado, crearVistaCartera(estado));
     }
 }
@@ -122,6 +132,12 @@ function rutaDesdeHash() {
     }
     if (window.location.hash === '#/embudo') {
         return { vista: 'embudo', id: null };
+    }
+    if (window.location.hash === '#/actividades') {
+        return { vista: 'actividades', id: null };
+    }
+    if (window.location.hash === '#/resumen') {
+        return { vista: 'resumen', id: null };
     }
     return { vista: 'cartera', id: null };
 }
@@ -285,6 +301,56 @@ async function cargarOportunidades() {
     }
 }
 
+async function cargarActividades() {
+    const miSesion = sesion;
+    const filtro = obtenerEstado().actividades.filtro;
+    actualizar((e) => { e.actividades.cargando = true; e.actividades.error = null; });
+    try {
+        const lista = await listarActividades(obtenerEstado().token, filtro);
+        if (miSesion !== sesion) return;
+        actualizar((e) => {
+            e.actividades.lista = lista;
+            e.actividades.cargada = true;
+            e.actividades.cargando = false;
+            e.actividades.actualizando = null;
+            e.conexion = null;
+        });
+    } catch (error) {
+        if (miSesion !== sesion) return;
+        const mensaje = describirError(error);
+        actualizar((e) => {
+            e.actividades.cargando = false;
+            e.actividades.actualizando = null;
+            if (error instanceof ConexionError) e.conexion = mensaje;
+            else if (mensaje) e.actividades.error = mensaje;
+        });
+    }
+}
+
+async function cargarResumen(mes = obtenerEstado().reporte.mes || mesActualGuatemala()) {
+    const miSesion = sesion;
+    actualizar((e) => { e.reporte.mes = mes; e.reporte.cargando = true; e.reporte.error = null; });
+    try {
+        const datos = await obtenerResumen(obtenerEstado().token, mes);
+        if (miSesion !== sesion) return;
+        actualizar((e) => {
+            e.reporte.datos = datos;
+            e.reporte.mes = datos.mes;
+            e.reporte.cargado = true;
+            e.reporte.cargando = false;
+            e.conexion = null;
+        });
+    } catch (error) {
+        if (miSesion !== sesion) return;
+        const mensaje = describirError(error);
+        actualizar((e) => {
+            e.reporte.cargando = false;
+            if (error instanceof ConexionError) e.conexion = mensaje;
+            else if (mensaje) e.reporte.error = mensaje;
+        });
+    }
+}
+
 async function cargarDetalle(id) {
     const miSesion = sesion;
     actualizar((e) => {
@@ -322,8 +388,57 @@ function irA(vista, id = null) {
         cargarOportunidades();
     } else if (vista === 'detalle') {
         cargarDetalle(id);
+    } else if (vista === 'actividades') {
+        cargarActividades();
+    } else if (vista === 'resumen') {
+        cargarResumen();
     } else {
         cargarCartera({ conTotal: true });
+    }
+}
+
+async function enviarNuevaActividad(form) {
+    const valores = new FormData(form);
+    const venceEnLocal = String(valores.get('vence_en') ?? '');
+    const datos = {
+        tipo: String(valores.get('tipo') ?? ''),
+        descripcion: String(valores.get('descripcion') ?? ''),
+    };
+    if (venceEnLocal !== '') {
+        datos.vence_en = fechaLocalGuatemalaAISO(venceEnLocal) ?? venceEnLocal;
+    }
+    actualizar((e) => {
+        e.actividades.nueva.datos = {
+            cliente_id: String(valores.get('cliente_id') ?? ''), tipo: datos.tipo,
+            descripcion: datos.descripcion, vence_en: venceEnLocal,
+        };
+        e.actividades.nueva.errores = {};
+        e.actividades.nueva.error = null;
+        e.actividades.nueva.enviando = true;
+    });
+    try {
+        await crearActividad(obtenerEstado().token, Number(valores.get('cliente_id')), datos);
+        actualizar((e) => { e.actividades.nueva = nuevaActividadVacia(); });
+        cargarActividades();
+    } catch (error) {
+        actualizar((e) => {
+            e.actividades.nueva.enviando = false;
+            if (error instanceof ApiError && error.status === 422) e.actividades.nueva.errores = erroresDe(error);
+            else e.actividades.nueva.error = describirError(error);
+        });
+    }
+}
+
+async function actualizarActividad(id, completada) {
+    actualizar((e) => { e.actividades.actualizando = id; e.actividades.error = null; });
+    try {
+        await cambiarActividad(obtenerEstado().token, id, completada);
+        cargarActividades();
+    } catch (error) {
+        actualizar((e) => {
+            e.actividades.actualizando = null;
+            e.actividades.error = describirError(error);
+        });
     }
 }
 
@@ -561,6 +676,8 @@ app.addEventListener('submit', (event) => {
         enviarProducto(form);
     } else if (form.dataset.form === 'cambiar-etapa') {
         enviarEtapa(form);
+    } else if (form.dataset.form === 'crear-actividad') {
+        enviarNuevaActividad(form);
     }
 });
 
@@ -583,6 +700,8 @@ app.addEventListener('input', (event) => {
             if (campo.name === 'etapa') e.detalle.etapa.etapa = campo.value;
             else e.detalle.etapa.motivo = campo.value;
         }, { render: false });
+    } else if (form === 'crear-actividad' && ['cliente_id', 'tipo', 'descripcion', 'vence_en'].includes(campo.name)) {
+        actualizar((e) => { e.actividades.nueva.datos[campo.name] = campo.value; }, { render: false });
     } else if (campo.id === 'busqueda') {
         actualizar((e) => { e.cartera.q = campo.value; }, { render: false });
         clearTimeout(temporizador);
@@ -625,6 +744,15 @@ app.addEventListener('click', (event) => {
         case 'eliminar-producto':
             eliminarProducto(Number(boton.dataset.id));
             break;
+        case 'abrir-nueva-actividad':
+            actualizar((e) => { e.actividades.nueva = { ...nuevaActividadVacia(), abierta: true }; });
+            break;
+        case 'cancelar-nueva-actividad':
+            actualizar((e) => { e.actividades.nueva = nuevaActividadVacia(); });
+            break;
+        case 'cambiar-actividad':
+            actualizarActividad(Number(boton.dataset.id), boton.dataset.completada === 'true');
+            break;
         case 'tomar':
             tomar(Number(boton.dataset.id));
             break;
@@ -654,6 +782,17 @@ window.addEventListener('hashchange', () => {
 
 app.addEventListener('change', (event) => {
     const campo = event.target;
+    if (campo.id === 'filtro-actividades') {
+        actualizar((e) => { e.actividades.filtro = campo.value; e.actividades.cargada = false; });
+        cargarActividades();
+        return;
+    }
+    if (campo.id === 'resumen-mes' || campo.id === 'resumen-anio') {
+        const mes = campo.id === 'resumen-mes' ? campo.value : document.getElementById('resumen-mes')?.value;
+        const anio = campo.id === 'resumen-anio' ? campo.value : document.getElementById('resumen-anio')?.value;
+        if (mes && anio) cargarResumen(`${anio}-${mes}`);
+        return;
+    }
     if (campo.closest('[data-form="cambiar-etapa"]') && ['etapa', 'motivo_perdida'].includes(campo.name)) {
         actualizar((e) => {
             if (campo.name === 'etapa') e.detalle.etapa.etapa = campo.value;
