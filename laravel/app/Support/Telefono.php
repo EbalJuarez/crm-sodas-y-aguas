@@ -6,6 +6,10 @@ final class Telefono
 {
     public static function normalizar(?string $valor): ?string
     {
+        if (str_contains((string) $valor, "\u{FEFF}")) {
+            return null;
+        }
+
         $telefono = preg_replace('/[\s.()\-]+/u', '', (string) $valor) ?? '';
 
         if (str_starts_with($telefono, '+502')) {

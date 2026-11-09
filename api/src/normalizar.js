@@ -11,9 +11,14 @@
  */
 export function compactarNit(valor) {
   const texto = typeof valor === 'string' ? valor : '';
+  const mayusculas = texto.replace(/[a-z]/g, (letra) => letra.toUpperCase());
 
-  return texto
-    .replace(/[a-z]/g, (letra) => letra.toUpperCase())
+  // PHP no considera U+FEFF un separador para Nit::compactar; no lo ampliamos en JS.
+  if (mayusculas.includes('\uFEFF')) {
+    return mayusculas;
+  }
+
+  return mayusculas
     .replace(/[\s-]+/gu, '')
     .replace(/^0+/, '');
 }
@@ -67,7 +72,12 @@ export function normalizarNit(valor) {
  * 4. el resultado debe cumplir ^[2-9][0-9]{7}$.
  */
 export function normalizarTelefono(valor) {
-  let telefono = (typeof valor === 'string' ? valor : '').replace(/[\s.()-]+/gu, '');
+  const texto = typeof valor === 'string' ? valor : '';
+  if (texto.includes('\uFEFF')) {
+    return null;
+  }
+
+  let telefono = texto.replace(/[\s.()-]+/gu, '');
 
   if (telefono.startsWith('+502')) {
     telefono = telefono.slice(4);

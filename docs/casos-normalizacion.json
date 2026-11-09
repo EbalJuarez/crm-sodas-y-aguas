@@ -14,7 +14,8 @@
         {"entrada": "123456789016", "valido": true, "normalizado": "123456789016"},
         {"entrada": "1234567890120", "valido": false, "normalizado": null},
         {"entrada": "4521817-K-", "valido": true, "normalizado": "4521817K"},
-        {"entrada": "4521817.K", "valido": false, "normalizado": null}
+        {"entrada": "4521817.K", "valido": false, "normalizado": null},
+        {"entrada": "452\uFEFF1817K", "valido": false, "normalizado": null}
     ],
     "telefono": [
         {"entrada": "5021 2345", "valido": true, "normalizado": "50212345"},
@@ -38,7 +39,8 @@
         {"entrada": "5555123", "valido": false, "normalizado": null},
         {"entrada": "50234567", "valido": true, "normalizado": "50234567"},
         {"entrada": "50212345", "valido": true, "normalizado": "50212345"},
-        {"entrada": "", "valido": false, "normalizado": null}
+        {"entrada": "", "valido": false, "normalizado": null},
+        {"entrada": "5555\uFEFF1234", "valido": false, "normalizado": null}
     ],
     "correo": [
         {"entrada": "a@b.com", "valido": true},

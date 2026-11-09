@@ -7,6 +7,12 @@ final class Nit
     public static function compactar(?string $valor): string
     {
         $compacto = strtoupper((string) $valor);
+
+        // U+FEFF no es un separador aceptado por la regla actual de PHP ni por la API.
+        if (str_contains($compacto, "\u{FEFF}")) {
+            return $compacto;
+        }
+
         $compacto = preg_replace('/[\s-]+/u', '', $compacto) ?? '';
 
         return ltrim($compacto, '0');
