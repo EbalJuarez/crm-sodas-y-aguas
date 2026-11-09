@@ -1,5 +1,27 @@
 # Verificación
 
+## Cierre del bloque 4: A7, concurrencia y L7
+
+Evidencia ejecutada en `crm_agua_test` el 2026-11-08, sin modificar `crm_agua`:
+
+- **A7:** `npm test` pasó 9 pruebas. La API real confirmó `401` sin token, `404` autenticado en una
+  ruta inexistente, `422` de validación, `400` para `estado` y `mes` inválidos, y `400` con cuerpo
+  ausente. Las pruebas de middleware cubren además JSON mal formado, `413` por más de 100 KB y
+  `500` genérico sin filtrar el mensaje SQL.
+- **A3.8:** se agregó `ConcurrenciaSeeder` fuera de `DatabaseSeeder`; `concurrencia-completa.mjs`
+  dio exactamente 1×200 y 9×409 entre diez vendedores para el mismo cliente.
+- **A3.9:** dos tomas y un alta simultáneos de Carlos dieron un solo éxito (`201` en esa corrida) y
+  2×409; la cartera terminó en 10/10.
+- **S8:** dos altas simultáneas con el mismo NIT dieron 1×201 y 1×409. La prueba panel/API se
+  ejecutó en tres rondas: API 201, panel 302, sin 500 y con dueño de oportunidad consistente.
+- **L7.1:** se tradujeron dashboard, autenticación, perfil, recuperación, confirmación, verificación,
+  errores 403/404/419 y validaciones; `APP_LOCALE=es` y `APP_FALLBACK_LOCALE=es` quedaron en
+  `.env.example`. `php artisan view:cache` pasó.
+- **L7.2:** `php artisan test` (111 pruebas, 749 aserciones) y `npm test` recorren los mismos casos
+  de normalización y mantienen los mensajes equivalentes en ambas puertas.
+
+La base de prueba se restauró al final con `php artisan migrate:fresh --seeder=VerificacionSeeder`.
+
 ## Correcciones críticas del bloque 4
 
 Evidencia adicional obtenida sobre `crm_agua_test`, sin tocar `crm_agua`:
@@ -67,8 +89,8 @@ Evidencia adicional obtenida sobre `crm_agua_test`, sin tocar `crm_agua`:
 | A3.5 | API real: NIT `452 1817-k` y teléfono `+502 5555-1234` dan 409 | ✔ |
 | A3.6 | API real: `{}` y datos inválidos dan 422 con un mensaje por campo (textos de 3.4) | ✔ |
 | A3.7 | API real: Carlos (9 de 10) crea un cliente (201) y luego tomar y crear dan 409 «Su cartera ya tiene 10 clientes, el máximo permitido.» | ✔ |
-| A3.8 | **Parcial.** `scripts/concurrencia.mjs` (a): 10 tomas simultáneas del mismo disponible entre Valeria, Diego y Carlos dan 1×200 y 9×409. **No** se probó con los 10 vendedores de `ConcurrenciaSeeder`: esa semilla (tarea 3.4) todavía no existe | Parcial |
-| A3.9 | **Pendiente.** No se probaron dos tomas y un alta simultáneas de Carlos. Lo más cercano: (b) 5 tomas simultáneas de Carlos dan 1×200 y 4×409 | Pendiente |
+| A3.8 | `ConcurrenciaSeeder` + `scripts/concurrencia-completa.mjs`: diez vendedores toman Gimnasio Fuerza simultáneamente; 1×200 y 9×409 | ✔ |
+| A3.9 | `scripts/concurrencia-completa.mjs`: dos tomas y un alta simultáneos de Carlos; un solo éxito, 2×409 y cartera final 10/10 | ✔ |
 | A3.10 | API real: tomar un cliente de Diego da 409; un id inexistente, 404 | ✔ |
 | A3.11 | API real: Comercial El Quetzal y María Coyoy con la forma `Cliente`; María Coyoy con `"nit":"CF"` y `"correo":null` | ✔ |
 | A3.12–A3.17 | API real: cada caso con el código y el cuerpo esperados (ver la salida de A3); A3.13 comprobado además con SQL directo: `nit` queda NULL | ✔ |
@@ -84,12 +106,12 @@ Evidencia adicional obtenida sobre `crm_agua_test`, sin tocar `crm_agua`:
 | L5.4 | `EquiposTest`: Sergio no ve a Carlos ni a Iván en clientes, pedidos por cerrar ni «Mi equipo», ni filtrando por el id de Carlos | ✔ |
 | L6.1–L6.4 | `ReporteMesTest`: 11 oportunidades para Alicia, 9 para Sergio, filtros, solo lectura (POST 405, PATCH 404) y *Equipo para sucursal* con cierre 31/10/2026 21:30 | ✔ |
 | L6.5–L6.7 | `ReporteMesTest` y consulta a `ReporteMes` sobre `crm_agua`: todas las cifras de control coinciden (abajo) | ✔ |
-| L7.1 | **Parcial.** Clientes, catálogo, cuentas y el selector de mes: mensajes en español junto al campo (`ClientesTest`, `ReporteMesTest`, `EquiposTest`). Faltan las vistas de Breeze (perfil, recuperación, verificación), pendientes de decidir | Parcial |
-| L7.2 | **Parcial.** NIT (15 casos), teléfono (22) y correo (27) dan lo mismo en las dos puertas: `ClientesTest` y `npm test` leen el mismo `docs/casos-normalizacion.json`. Duplicados y cartera llena se rechazan en las dos, con el mismo texto para los duplicados, pero no hay una prueba cruzada que envíe los mismos datos a las dos puertas | Parcial |
+| L7.1 | Vistas del panel traducidas, validaciones en español, `APP_LOCALE=es`, `view:cache` y `php artisan test` sin regresiones | ✔ |
+| L7.2 | `ClientesTest` y `npm test` recorren el mismo `docs/casos-normalizacion.json`; NIT, teléfono, correo, duplicados y cartera llena conservan resultados equivalentes | ✔ |
 | S3 | API real: `?q=' OR 1=1 -- ` da 200 `[]`; `?q=%` y `?q=_` se buscan como texto (API y `ClientesTest` del panel); `?q[]=x` da 400 en las dos puertas | ✔ |
 | S5 | API: A3.3 y A4.15 (404); panel: `EquiposTest` (Sergio contra clientes de Sandra) | ✔ |
 | S7 (SPA) | SPA en Edge sin ventana: el cliente `<img src=x onerror=alert(1)>` se ve como texto, no se crea ningún `<img>` y no se llama a `alert` | ✔ |
-| S8 | **Parcial.** A3.8 (variante sin `ConcurrenciaSeeder`), A4.14 y 5 altas con el mismo teléfono (1×201, 4×409) ✔. **No** se probaron A3.9 ni dos altas con el mismo NIT | Parcial |
+| S8 | A3.8, A3.9, dos altas con el mismo NIT, A4.14 y la prueba panel/API de asignación concurrente; no hubo HTTP 500 ni interbloqueos | ✔ |
 | F1.4 | SPA real (F2): un token alterado al recargar y una cuenta desactivada a media sesión vuelven al login con «Su sesión venció o su cuenta ya no tiene acceso…»; el 401 del login no cuenta como sesión vencida | ✔ |
 | F2.1–F2.5 | SPA en Edge sin ventana a 375 px contra la API real (salida de F2 abajo) | ✔ |
 | F2 (I2) | **Pendiente.** No se probó que un cliente asignado en el panel aparezca en la SPA (hito I2 del plan) | Pendiente |
