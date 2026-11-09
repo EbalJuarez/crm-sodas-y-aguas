@@ -19,6 +19,23 @@
                         <x-nav-link :href="route('usuarios.index')" :active="request()->routeIs('usuarios.*')">
                             Cuentas
                         </x-nav-link>
+                        <x-nav-link :href="route('productos.index')" :active="request()->routeIs('productos.*')">
+                            Catálogo
+                        </x-nav-link>
+                    @endif
+                    @if (Auth::user()->esAdministrador() || Auth::user()->esSupervisor())
+                        <x-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.*')">
+                            Clientes
+                        </x-nav-link>
+                        <x-nav-link :href="route('equipo.index')" :active="request()->routeIs('equipo.*')">
+                            {{ Auth::user()->esAdministrador() ? 'Vendedores' : 'Mi equipo' }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('oportunidades.index')" :active="request()->routeIs('oportunidades.*')">
+                            Pedidos por cerrar
+                        </x-nav-link>
+                        <x-nav-link :href="route('reportes.mes')" :active="request()->routeIs('reportes.*')">
+                            Reporte del mes
+                        </x-nav-link>
                     @endif
                 </div>
             </div>
@@ -78,6 +95,23 @@
             @if (Auth::user()->esAdministrador())
                 <x-responsive-nav-link :href="route('usuarios.index')" :active="request()->routeIs('usuarios.*')">
                     Cuentas
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('productos.index')" :active="request()->routeIs('productos.*')">
+                    Catálogo
+                </x-responsive-nav-link>
+            @endif
+            @if (Auth::user()->esAdministrador() || Auth::user()->esSupervisor())
+                <x-responsive-nav-link :href="route('clientes.index')" :active="request()->routeIs('clientes.*')">
+                    Clientes
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('equipo.index')" :active="request()->routeIs('equipo.*')">
+                    {{ Auth::user()->esAdministrador() ? 'Vendedores' : 'Mi equipo' }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('oportunidades.index')" :active="request()->routeIs('oportunidades.*')">
+                    Pedidos por cerrar
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('reportes.mes')" :active="request()->routeIs('reportes.*')">
+                    Reporte del mes
                 </x-responsive-nav-link>
             @endif
         </div>

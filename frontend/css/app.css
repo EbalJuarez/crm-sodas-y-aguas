@@ -1,0 +1,160 @@
+:root {
+    --agua-profunda: #12364a;
+    --agua: #1e7a8a;
+    --agua-clara: #dff3f4;
+    --arena: #f6f3ed;
+    --texto: #19303b;
+}
+
+body {
+    min-width: 320px;
+    overflow-wrap: anywhere; /* nombres o correos largos sin espacios no ensanchan la página (F6.5) */
+    background: var(--arena);
+    color: var(--texto);
+}
+
+.app-shell {
+    min-height: 100vh;
+}
+
+.login-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 12% 20%, rgba(255, 255, 255, .75), transparent 28rem),
+        linear-gradient(135deg, var(--agua-clara), var(--arena) 58%);
+}
+
+.login-card {
+    max-width: 28rem;
+    border: 0;
+    border-top: .35rem solid var(--agua);
+    box-shadow: 0 1rem 3rem rgba(18, 54, 74, .12);
+}
+
+.brand-mark {
+    display: inline-grid;
+    width: 3rem;
+    height: 3rem;
+    place-items: center;
+    border-radius: 1rem 1rem 1rem .25rem;
+    background: var(--agua-profunda);
+    color: white;
+    font-weight: 700;
+    letter-spacing: .08em;
+}
+
+.brand-name {
+    color: var(--agua-profunda);
+    letter-spacing: -.02em;
+}
+
+.btn-agua {
+    background: var(--agua-profunda);
+    border-color: var(--agua-profunda);
+    color: white;
+}
+
+.btn-agua:hover,
+.btn-agua:focus-visible {
+    background: var(--agua);
+    border-color: var(--agua);
+    color: white;
+}
+
+.home-header {
+    background: var(--agua-profunda);
+    color: white;
+}
+
+.nav-underline .nav-link.active {
+    color: var(--agua-profunda);
+}
+
+.home-panel {
+    border: 0;
+    box-shadow: 0 .75rem 2rem rgba(18, 54, 74, .1);
+}
+
+.funnel-board {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(14rem, 1fr));
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: .25rem;
+}
+
+.funnel-column {
+    min-height: 11rem;
+    padding: .85rem;
+    border: 1px solid rgba(18, 54, 74, .1);
+    border-radius: .75rem;
+    background: rgba(255, 255, 255, .68);
+}
+
+.opportunity-card {
+    border-radius: .55rem !important;
+}
+
+.quantity-control {
+    min-width: 0;
+}
+
+.activity-overdue {
+    border-left: .35rem solid #dc3545;
+}
+
+.summary-card {
+    border-top: .25rem solid var(--agua);
+}
+
+.summary-total,
+.summary-pronostico {
+    border-top-color: var(--agua-profunda);
+}
+
+@media (max-width: 767.98px) {
+    .funnel-board {
+        grid-template-columns: 1fr;
+        overflow-x: visible;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .login-page {
+        padding: 1rem;
+    }
+
+    .login-card {
+        width: 100%;
+    }
+
+    .quantity-control {
+        width: 100%;
+    }
+
+    .table-responsive {
+        overflow-x: visible;
+    }
+
+    .table-responsive table {
+        table-layout: fixed;
+        width: 100%;
+        font-size: .875rem;
+    }
+
+    .table-responsive th,
+    .table-responsive td {
+        padding-left: .3rem;
+        padding-right: .3rem;
+        overflow-wrap: anywhere;
+    }
+
+    .quantity-control .form-control {
+        min-width: 0;
+    }
+
+    .quantity-control .btn {
+        padding-left: .35rem;
+        padding-right: .35rem;
+    }
+}

@@ -11,8 +11,8 @@
 | Bloque | Responsable | Inicio | Fin |
 |--------|-------------|--------|-----|
 | 1 | Integrante A | _(fecha)_ | _(fecha)_ |
-| 2 | Integrante B | _(fecha)_ | _(fecha)_ |
-| 3 | Integrante A | _(fecha)_ | _(fecha)_ |
+| 2 | Integrante B | _(fecha)_ | 2026-11-08 · **hecho** |
+| 3 | Integrante A | _(fecha)_ | 2026-11-08 · **hecho** (con pendientes) |
 | 4 | Integrante B | _(fecha)_ | _(fecha)_ |
 | Cierre | A y B | _(fecha)_ | _(fecha)_ |
 | Entrega (`entrega-final`) | A y B | — | _(fecha: semana anterior al examen final)_ |
@@ -157,7 +157,7 @@ integración no quede para el final (sección 6).
 | 1.3 | L1, L2 | Setup de Laravel (paso 3 de 1.1): proyecto nuevo con Breeze y MySQL | `composer create-project laravel/laravel laravel` (Laravel 13); `composer require laravel/breeze --dev`; `php artisan breeze:install blade`; `npm install` y `npm run build`; `.env` con `DB_CONNECTION=mysql`, `DB_DATABASE=crm_agua` y `APP_TIMEZONE=UTC`; `php artisan about` muestra `mysql`; `laravel/.env.example` sin valores reales | [E] «Guíame para crear el proyecto Laravel 13 en `laravel/` con Breeze (Blade) y MySQL según la sección 1 del plan. Dime los comandos; no ejecutes nada destructivo sin preguntar.» | `laravel: proyecto base con Breeze (Blade)` |
 | 1.4 | L2.1 | Quitar el registro público | `/register` responde 404 y el login no tiene enlace de registro (L2.1) | [E] «Elimina la ruta, el controlador y la vista de registro de Breeze, y el enlace del login.» | `laravel: elimina registro publico` |
 | 1.5 | L1.1–L1.3, RP5 | Migraciones: extensión de `users`, las 6 tablas del núcleo y, en migraciones aparte, `unidades_por_caja` en `productos` y en `oportunidad_productos` | `migrate:fresh` sin errores; `SHOW CREATE TABLE` muestra cada FK, UQ y `CHECK` de la sección 4 de la spec; los inserts de L1.3 y RP5 fallan | [E] «Escribe las migraciones de la sección 4 de la especificación, una por tabla, con FK, índices únicos y CHECK (con `DB::statement` y SQL fijo, sin datos del usuario). `users` se extiende con una migración propia. Las columnas de la regla propia van en dos migraciones nuevas.» | `laravel: migraciones del nucleo`; `laravel: columnas de unidades por caja` |
-| 1.6 | L1.4–L1.6 | `VerificacionSeeder` exacto y `DatabaseSeeder` (verificación + `SectorSeeder` vacío por ahora) | `migrate:fresh --seeder=VerificacionSeeder` da 7 cuentas, 5 productos, 21 clientes, 11 oportunidades, 43 registros de historial y 4 actividades; consultas SQL a mano dan las cifras de control | [E] «Escribe VerificacionSeeder con exactamente la semilla de la sección 11 del enunciado (te la pego), incluidos los 43 registros de historial con la fecha sugerida. Contraseñas con `Hash::make`. No ajustes ningún dato.» | `laravel: semilla de verificacion` |
+| 1.6 | L1.4–L1.6 | `VerificacionSeeder` exacto y `DatabaseSeeder` (verificación + `SectorSeeder`) | `migrate:fresh --seeder=VerificacionSeeder` da 7 cuentas, 5 productos, 21 clientes, 11 oportunidades, 43 registros de historial y 4 actividades; `--seed` agrega la semilla sectorial sin alterar la semilla oficial | [E] «Escribe VerificacionSeeder con exactamente la semilla de la sección 11 del enunciado (te la pego), incluidos los 43 registros de historial con la fecha sugerida. Contraseñas con `Hash::make`. No ajustes ningún dato.» | `laravel: semilla de verificacion` |
 | 1.7 | L2.2–L2.14 | Cuentas y roles: middleware `RolPanel` y `CuentaActiva`, CRUD de usuarios sin borrar, supervisor activo, D6, autoprotección del administrador | L2.1–L2.14 pasan a mano con la semilla | [E] «Implementa L2 de la especificación: login de Breeze que rechaza vendedores con mensaje hacia la SPA, middleware que expulsa cuentas desactivadas en la siguiente petición, administración de cuentas con FormRequest (mensajes de usted) y la decisión D6.» | `laravel: roles y acceso al panel`; `laravel: administracion de cuentas` |
 | 1.8 | P1 (R4) | Aclaración del teléfono en la especificación (riesgo «Teléfono» de la sección 5), antes de la tarea 2.5 | `docs/especificacion.md` describe la regla del prefijo y sus ejemplos en 3.4 y en el control de cambios; **`spec-v1` no se mueve** (sigue en `90613b0`); el cambio queda en un commit aparte | [E] «Agrega a 3.4 de la especificación la aclaración del teléfono de la sección 5 del plan, con sus ejemplos y una línea en el control de cambios. No toques nada más.» | `spec: aclara normalizacion del telefono` |
 
@@ -184,7 +184,13 @@ revisa `SHOW CREATE TABLE` de las 7 tablas; repite los inserts de L1.3 y RP5; re
 navegador; **lee el diff completo** (`git diff spec-v1..HEAD`). Anota lo encontrado en
 `docs/verificacion.md` (matriz) y hace el commit `docs: verificacion del bloque 1`.
 
-### Bloque 2 — Integrante B: A1, A2, L3, L4, F1
+### Bloque 2 — Integrante B: A1, A2, L3, L4, F1 — **HECHO** (2026-11-08)
+
+> Tareas 2.1–2.6 terminadas: `ab90dd6`, `3eddf1d`, `b5da01f`, `f63434a`, `f897d78`. Correcciones de
+> la auditoría: `bfcdee2`, `be50f6e`, `241d490`, `62b4f31`, `1fff582`, `1ddf305`, `ae9afaa`. Spec 1.2:
+> `563e6ce`. 88 pruebas en verde. Evidencia en `docs/verificacion.md` («Bloque 2»); entorno,
+> pendientes y trampas en `docs/traspaso.md` («Traspaso del bloque 2 al bloque 3»). El bloque llegó
+> antes en `e3273d5`, un commit sin prefijo que se descartó; `f897d78` usa `frontend:` en vez de `spa:`.
 
 | # | Requisito | Tarea | Terminado cuando | Prompt al agente | Commits |
 |---|-----------|-------|------------------|------------------|---------|
@@ -199,16 +205,23 @@ navegador; **lee el diff completo** (`git diff spec-v1..HEAD`). Anota lo encontr
 `none` en Postman; recorre L3 y L4 con la semilla; abre la SPA desde :5500 y desde otro origen (S6);
 **lee el diff completo** del bloque 2. Commit `docs: verificacion del bloque 2`.
 
-### Bloque 3 — Integrante A: L5, L6, L7, A3, A4, F2
+### Bloque 3 — Integrante A: L5, L6, L7, A3, A4, F2 — **HECHO** (2026-11-08)
+
+> Tareas 3.1, 3.2, 3.3, 3.5 y 3.7 terminadas (3.7 sin probar el hito I2): `510138c`, `c73747a`, `7dbbf5f`, `e3d89a5`, `c7869d3`,
+> `6a0b42a`. 3.6 parcial (`fe36cd2`, `c9e31bc`): falta la tabla cruzada de L7.2 y decidir las vistas de
+> Breeze. 3.4 quedó completada con `ConcurrenciaSeeder` y `api/scripts/concurrencia-completa.mjs` (A3.8,
+> A3.9 y duplicado de NIT). 3.2 y 3.5 quedaron en un commit cada una. 110 pruebas en
+> verde. Evidencia en `docs/verificacion.md` («Bloque 3», `9a4f4c2`); entorno, pendientes y riesgos en
+> `docs/traspaso.md` («Traspaso del bloque 3 al bloque 4»).
 
 | # | Requisito | Tarea | Terminado cuando | Prompt al agente | Commits |
 |---|-----------|-------|------------------|------------------|---------|
 | 3.1 | L5, S5 (panel) | Equipos y visibilidad: políticas con 404, página del equipo | L5.1–L5.4 | [E] «Implementa L5: el supervisor solo ve su equipo y los disponibles; lo ajeno responde 404 aunque se escriba la URL; solo asigna a vendedores activos de su equipo, aunque se altere el formulario.» | `laravel: equipos y visibilidad` |
 | 3.2 | L6, R7 | Oportunidades (solo lectura) y reporte del mes por vendedor y por producto | L6.1–L6.7 con las cifras exactas | [E] «Implementa L6 con Eloquent o el constructor de consultas, con enlaces de parámetros. El mes se agrupa en hora de Guatemala (UTC-6 fijo); el pronóstico es `ROUND(SUM(...), 2)` sobre las abiertas; total con el precio guardado en la línea.» | `laravel: oportunidades de solo lectura`; `laravel: reporte del mes` |
 | 3.3 | A3, R3, R4, D5, P-7, P-8 | Endpoints de clientes; `validacion/nit.js` y `telefono.js` con los mismos casos | A3.1–A3.18; una prueba con `node:test` recorre `docs/casos-normalizacion.json` y da lo mismo que la prueba de Laravel | [E] «Implementa A3 y 3.1.1. La validación de NIT y teléfono debe dar exactamente lo mismo que `laravel/app/Support` (léelo), con la regla del teléfono de la sección 5 del plan. Escribe una prueba con `node:test` (sin dependencias) que recorra `docs/casos-normalizacion.json`. Cartera: TX con `SELECT … FOR UPDATE` de la fila del vendedor en `users`. Tomar: `UPDATE … WHERE vendedor_id IS NULL` + `affectedRows`. `ER_DUP_ENTRY` → 409.» | `api: clientes y cartera` |
-| 3.4 | A3.8, A3.9, S8 | `ConcurrenciaSeeder` y `api/scripts/concurrencia.js` | A3.8: uno 200 y nueve 409; A3.9: Carlos termina con 10; dos altas con el mismo NIT: 201 y 409 | [E] «Escribe ConcurrenciaSeeder según la sección 2 de la especificación (no lo llames desde DatabaseSeeder) y un script Node sin dependencias que lance las peticiones simultáneas de A3.8, A3.9 y S8 e imprima los códigos.» | `laravel: semilla de concurrencia`; `api: script de concurrencia` |
+| 3.4 | A3.8, A3.9, S8 | `ConcurrenciaSeeder` y `api/scripts/concurrencia-completa.mjs` | A3.8: uno 200 y nueve 409; A3.9: un éxito, dos 409 y Carlos en 10; dos altas con el mismo NIT: 201 y 409 | [E] «Escribe ConcurrenciaSeeder según la sección 2 de la especificación (no lo llames desde DatabaseSeeder) y un script Node sin dependencias que lance las peticiones simultáneas de A3.8, A3.9 y S8 e imprima los códigos.» | `laravel: semilla de concurrencia`; `api: script de concurrencia` |
 | 3.5 | A4, R5, R6, D1, RP | Oportunidades, líneas y etapas; regla de unidades por caja | A4.1–A4.22, RP1–RP4, RP6 | [E] «Implementa A4 y 3.1.1: transiciones de D1, cambio de etapa + historial + fecha de cierre en una TX con `FOR UPDATE` de la oportunidad, precio y `unidades_por_caja` copiados con `INSERT … SELECT`, PATCH de cantidad contra la copia de la línea. Al crear, bloquea la fila del cliente (D3).» | `api: oportunidades y etapas`; `api: productos de la oportunidad y regla por caja` |
-| 3.6 | L7 | Revisión de validación en el panel y prueba cruzada L7.2 | L7.1 en todos los formularios; L7.2 con los mismos datos en el panel y en la API | [E] «Revisa todos los FormRequest contra 3.4: mensajes en español, de usted, junto a cada campo y conservando lo escrito. Haz una tabla de casos de L7.2 y su resultado en las dos puertas.» | `laravel: validacion en el servidor` |
+| 3.6 | L7 | Revisión de validación en el panel y prueba cruzada L7.2 | L7.1 en todos los formularios; L7.2 con los mismos datos en el panel y en la API | [E] «Revisa todos los FormRequest contra 3.4: mensajes en español, de usted, junto a cada campo y conservando lo escrito. Haz una tabla de casos de L7.2 y su resultado en las dos puertas.» | `laravel: validacion en el servidor`; cierre L7 en bloque 4 |
 | 3.7 | F2 | Cartera, alta, disponibles y tomar | F2.1–F2.5 contra la API real; un cliente asignado en el panel aparece en la SPA | [E] «Implementa F2: cartera con búsqueda en el servidor y "N de 10", alta con errores del servidor junto a cada campo, disponibles con la acción de tomar y el mensaje del 409.» | `spa: cartera y disponibles` |
 
 **Decisiones pendientes para la tarea 3.6 (L7)** (anotadas el 2026-11-08, al cerrar L2):
@@ -247,10 +260,10 @@ en la SPA y en el panel; **lee el diff completo** del bloque 4. Commit `docs: ve
 
 | # | Quién | Requisito | Tarea | Terminado cuando | Prompt al agente | Commits |
 |---|-------|-----------|-------|------------------|------------------|---------|
-| C.1 | A | L1.5, L1.6, RP | `SectorSeeder` | Catálogo con precios en quetzales, al menos un producto con `unidades_por_caja = 24` (Gaseosa lata 355 ml), supervisores y vendedores propios, clientes (≤ 10 por vendedor), oportunidades en todas las etapas y actividades; sin correos, NIT ni teléfonos repetidos; `migrate:fresh --seed` sin pasos manuales | [E] «Escribe SectorSeeder según 1.1 y la sección 6 de la especificación. Comprueba con SQL que no repite correos, NIT ni teléfonos de la verificación y que nadie pasa de 10 clientes.» | `laravel: semilla del sector` |
-| C.2 | A | P5 | Bitácora de IA (≥ 3 casos, cada uno con su commit corrector) | Cada caso dice qué propuso el agente, cómo se detectó y qué commit lo corrigió | — | `docs: bitacora de IA` |
-| C.3 | B | P3, S1–S8 | `verificacion.md`: matriz de cada criterio con su evidencia, pruebas de seguridad (incluida la concurrencia) y cifras de control obtenidas en el panel y en la API | No queda ningún criterio sin evidencia | [E] «Arma la matriz de `docs/verificacion.md` con cada criterio de la especificación y su evidencia (petición de Postman, captura o consulta). Marca los que no tienen evidencia; no inventes resultados.» | `docs: matriz de verificacion` |
-| C.4 | B | A8.1 | README con los pasos exactos desde cero | Alguien sigue el README en un clon limpio y levanta las tres piezas sin pasos no escritos | [E] «Escribe los pasos del README para levantar MySQL, `laravel/`, `api/` y `frontend/` desde cero.» | `docs: pasos de instalacion` |
+| C.1 | A | L1.5, L1.6, RP | `SectorSeeder` | Catálogo con precios en quetzales, al menos un producto con `unidades_por_caja = 24`, supervisores y vendedores propios, clientes (≤ 10 por vendedor), oportunidades en todas las etapas y actividades; sin correos, NIT ni teléfonos repetidos; `migrate:fresh --seed` sin pasos manuales | [E] «Escribe SectorSeeder según 1.1 y la sección 6 de la especificación. Comprueba con SQL que no repite correos, NIT ni teléfonos de la verificación y que nadie pasa de 10 clientes.» | `laravel: semilla del sector`; `laravel: completa etapas de semilla sector` |
+| C.2 | A | P5 | Bitácora de IA (≥ 3 casos, cada uno con su commit corrector) | Cinco casos documentados con detección, commit corrector y lección | — | `docs: bitacora de errores de IA` |
+| C.3 | B | P3, S1–S8 | `verificacion.md`: matriz de cada criterio con su evidencia, pruebas de seguridad (incluida la concurrencia) y cifras de control obtenidas en el panel y en la API | La matriz distingue evidencia ejecutada de las comprobaciones manuales pendientes; no inventa resultados | [E] «Arma la matriz de `docs/verificacion.md` con cada criterio de la especificación y su evidencia (petición de Postman, captura o consulta). Marca los que no tienen evidencia; no inventes resultados.» | `docs: matriz de verificacion` |
+| C.4 | B | A8.1 | README con los pasos exactos desde cero | Requisitos, MySQL, configuración, semillas, tres piezas, pruebas, endpoints y errores documentados | [E] «Escribe los pasos del README para levantar MySQL, `laravel/`, `api/` y `frontend/` desde cero.» | `docs: instalacion y uso del CRM` |
 | C.5 | A y B | Entrega | Ensayo de la defensa y etiqueta | `migrate:fresh --seeder=VerificacionSeeder`, las tres piezas corriendo, Postman abierto; `git tag entrega-final` y `git push origin entrega-final`; `git rev-parse entrega-final` se entrega en el aula virtual | — (lo hace la pareja) | — |
 
 ---
