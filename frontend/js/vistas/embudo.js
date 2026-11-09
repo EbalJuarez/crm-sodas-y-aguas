@@ -47,7 +47,7 @@ function campo(id, etiqueta, nombre, valor, error) {
     return h('div', {},
         h('label', { class: 'form-label', htmlFor: id, text: etiqueta }),
         h('input', {
-            class: `form-control${error ? ' is-invalid' : ''}`, id, name, type: 'text', value: valor,
+            class: `form-control${error ? ' is-invalid' : ''}`, id, name: nombre, type: 'text', value: valor,
             'aria-invalid': error ? 'true' : null, 'aria-describedby': error ? `${id}-error` : null,
         }),
         error && h('div', { class: 'invalid-feedback', id: `${id}-error`, text: error }));

@@ -58,7 +58,7 @@ function formularioNueva(nueva, clientes) {
 function campoSelect(id, etiqueta, nombre, valor, opciones, error, placeholder = null) {
     return h('div', {},
         h('label', { class: 'form-label', htmlFor: id, text: etiqueta }),
-        h('select', { class: `form-select${error ? ' is-invalid' : ''}`, id, name, value: valor },
+        h('select', { class: `form-select${error ? ' is-invalid' : ''}`, id, name: nombre, value: valor },
             placeholder && h('option', { value: '' }, placeholder),
             opciones.map(([clave, texto]) => h('option', { value: clave }, texto))),
         error && h('div', { class: 'invalid-feedback', text: error }));
@@ -67,7 +67,7 @@ function campoSelect(id, etiqueta, nombre, valor, opciones, error, placeholder =
 function campoTexto(id, etiqueta, nombre, valor, error) {
     return h('div', {},
         h('label', { class: 'form-label', htmlFor: id, text: etiqueta }),
-        h('textarea', { class: `form-control${error ? ' is-invalid' : ''}`, id, name, rows: '2', text: valor }),
+        h('textarea', { class: `form-control${error ? ' is-invalid' : ''}`, id, name: nombre, rows: '2', text: valor }),
         error && h('div', { class: 'invalid-feedback', text: error }));
 }
 

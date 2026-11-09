@@ -1220,8 +1220,30 @@ OK (110 tests, 741 assertions)
   textos, y se agregan `lang/es` y `APP_LOCALE=es`.
 - **Lección:** una regla de una puerta (P-7 es de la API) no se copia a la otra sin que la spec lo diga.
 
+### Caso 6 — Los formularios de la SPA enviaban los campos vacíos
+
+- **Fecha:** 2026-11-09 · **Integrante:** A
+- **Qué propuso el agente:** en los ayudantes `campo` (`embudo.js`), `campoSelect` y `campoTexto`
+  (`actividades.js`), el parámetro se llama `nombre`, pero el objeto de propiedades usaba la forma
+  abreviada `{ id, name }`. Como no existe una variable local `name`, JavaScript tomó `window.name`
+  (`""`) y los campos quedaron **sin atributo `name`**, así que `FormData` no los incluía.
+- **Por qué es incorrecto:** al crear una oportunidad la SPA enviaba `{"cliente_id":17,"titulo":""}`.
+  La API respondía, correctamente, 422 «Escriba el título.», y el formulario se volvía a dibujar vacío.
+  Lo mismo pasaba con el tipo, el cliente y la descripción de una actividad nueva.
+- **Cómo se detectó:** al usar la SPA antes de la exposición. Se reprodujo en un navegador sin ventana
+  interceptando el `POST` (los datos del formulario solo traían `cliente_id`). Las pruebas
+  automáticas (111 de Laravel y 9 de la API) no lo detectaron porque prueban la API directamente,
+  no los formularios de la SPA.
+- **Commits que lo introdujeron:** `cee7e96` (embudo) y `f152591` (actividades).
+- **Corrección:** `name: nombre` en los tres ayudantes. Comprobado en el navegador: la oportunidad
+  envía `{"cliente_id":17,"titulo":"Prueba de titulo"}` y la actividad envía tipo, descripción y
+  `vence_en`. Commit: pendiente.
+- **Lección:** la abreviatura `{ name }` de JavaScript no da error si la variable no existe
+  localmente, porque `name` es una propiedad global del navegador. Un formulario de la SPA se prueba
+  enviándolo desde el navegador, no solo probando su endpoint.
+
 ### Cierre de la bitácora
 
-Los cinco casos anteriores cumplen P5: cada uno identifica la propuesta incorrecta, la observación que
+Los seis casos anteriores cumplen P5: cada uno identifica la propuesta incorrecta, la observación que
 la descubrió, el commit que la introdujo, el commit corrector y la lección aplicable. No se agregan casos
 sin evidencia de la historia real del repositorio.
