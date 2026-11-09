@@ -124,28 +124,38 @@ class SectorSeeder extends Seeder
         $oportunidades = [
             [
                 'Tienda El Manantial', 'Julia', 'Abastecimiento semanal de bebidas', 'ganada',
-                '2026-10-28 15:00:00', [
+                '2026-10-28 15:00:00', null, [
                     ['Fardo de botellas 600 ml', 48, '42.00', 24],
                     ['Caja de gaseosas surtidas', 24, '96.00', 12],
                 ],
             ],
             [
                 'Colegio Los Pinos', 'Andrés', 'Instalación de dispensadores', 'propuesta',
-                null, [
+                null, null, [
                     ['Dispensador de agua', 2, '325.00', null],
                     ['Servicio de entrega programada', 1, '150.00', null],
                 ],
             ],
+            ['Restaurante La Cumbre', 'Julia', 'Recarga para cocina', 'prospecto', null, null, []],
+            ['Oficinas del Valle', 'Andrés', 'Abastecimiento corporativo', 'calificado', null, null, [
+                ['Envase de garrafón retornable', 4, '85.00', null],
+            ]],
+            ['Hogar López', 'Julia', 'Ruta de garrafones', 'negociacion', null, null, [
+                ['Recarga de garrafón 5 galones', 6, '28.00', null],
+            ]],
+            ['Hogar Choc', 'Andrés', 'Entrega de prueba', 'perdida', '2026-10-20 15:00:00', 'Eligió comprar en otro lugar', [
+                ['Recarga de garrafón 5 galones', 2, '28.00', null],
+            ]],
         ];
 
-        foreach ($oportunidades as [$cliente, $vendedor, $titulo, $etapa, $cierre, $lineas]) {
+        foreach ($oportunidades as [$cliente, $vendedor, $titulo, $etapa, $cierre, $motivo, $lineas]) {
             $creada = $cierre ?? '2026-11-02 16:00:00';
             $oportunidadId = DB::table('oportunidades')->insertGetId([
                 'cliente_id' => $clientes[$cliente],
                 'vendedor_id' => $usuarios[$vendedor],
                 'titulo' => $titulo,
                 'etapa' => $etapa,
-                'motivo_perdida' => null,
+                'motivo_perdida' => $motivo,
                 'fecha_cierre' => $cierre,
                 'created_at' => $creada,
                 'updated_at' => $creada,
