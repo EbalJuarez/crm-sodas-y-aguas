@@ -1,11 +1,238 @@
 {
   "info": {
-    "name": "CRM Distribuidora de agua - API",
+    "name": "CRM Aguaviva - API REST",
+    "description": "Coleccion de verificacion manual y automatica para la API del vendedor. Ejecute primero Login para guardar el token.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000/api" },
-    { "key": "token", "value": "" }
+    { "key": "token", "value": "" },
+    { "key": "clienteId", "value": "" },
+    { "key": "oportunidadId", "value": "" },
+    { "key": "actividadId", "value": "" },
+    { "key": "lineaId", "value": "" },
+    { "key": "productoId", "value": "" },
+    { "key": "mes", "value": "2026-10" }
   ],
-  "item": []
+  "item": [
+    {
+      "name": "Autenticacion",
+      "item": [
+        {
+          "name": "Login vendedor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"correo\": \"valeria@crm.test\",\n  \"clave\": \"Ventas2026\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{
+            "listen": "test",
+            "script": { "exec": [
+              "pm.test('responde 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.expect(json.token).to.be.a('string').and.not.empty;",
+              "pm.collectionVariables.set('token', json.token);"
+            ] }
+          }]
+        },
+        {
+          "name": "Login invalido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"correo\": \"no-existe@crm.test\",\n  \"clave\": \"incorrecta\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('responde 401', function () { pm.response.to.have.status(401); });",
+            "pm.expect(pm.response.json().error).to.be.a('string');"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Catalogo",
+      "item": [
+        {
+          "name": "Listar productos activos",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/productos" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('responde 200', function () { pm.response.to.have.status(200); });",
+            "const json = pm.response.json();",
+            "if (Array.isArray(json) && json.length) pm.collectionVariables.set('productoId', json[0].id);"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Clientes y cartera",
+      "item": [
+        {
+          "name": "Listar cartera",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/clientes?q=Xela" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('responde 200', function () { pm.response.to.have.status(200); });",
+            "const json = pm.response.json();",
+            "if (Array.isArray(json) && json.length) pm.collectionVariables.set('clienteId', json[0].id);"
+          ] } }]
+        },
+        {
+          "name": "Listar clientes disponibles",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/clientes/disponibles" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde 200', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Crear cliente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Cliente Postman\",\n  \"nit\": \"1456789K\",\n  \"telefono\": \"23889999\",\n  \"correo\": \"postman@aguaviva.test\"\n}" },
+            "url": "{{baseUrl}}/clientes"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('crea o detecta duplicado', function () { pm.expect([201, 409]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Consultar cliente",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/clientes/{{clienteId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde 200 o 404 segun el id', function () { pm.expect([200, 404]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Tomar cliente disponible",
+          "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/clientes/{{clienteId}}/tomar" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde con resultado de cartera', function () { pm.expect([200, 404, 409]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Actualizar cliente",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"correo\": \"actualizado@aguaviva.test\"\n}" },
+            "url": "{{baseUrl}}/clientes/{{clienteId}}"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde con validacion del cliente', function () { pm.expect([200, 404, 422]).to.include(pm.response.code); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Actividades",
+      "item": [
+        {
+          "name": "Listar actividades pendientes",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/actividades?estado=pendiente" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde 200', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Crear actividad",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"tipo\": \"llamada\",\n  \"descripcion\": \"Confirmar pedido de prueba\",\n  \"vence_en\": \"2026-12-01T16:00:00.000Z\"\n}" },
+            "url": "{{baseUrl}}/clientes/{{clienteId}}/actividades"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('responde 201 o 404', function () { pm.expect([201, 404]).to.include(pm.response.code); });",
+            "if (pm.response.code === 201) pm.collectionVariables.set('actividadId', pm.response.json().id);"
+          ] } }]
+        },
+        {
+          "name": "Completar actividad",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"completada\": true\n}" },
+            "url": "{{baseUrl}}/actividades/{{actividadId}}"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde con resultado de actividad', function () { pm.expect([200, 404, 422]).to.include(pm.response.code); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Oportunidades",
+      "item": [
+        {
+          "name": "Listar oportunidades",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/oportunidades?etapa=propuesta" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('responde 200', function () { pm.response.to.have.status(200); });",
+            "const json = pm.response.json();",
+            "if (Array.isArray(json) && json.length) pm.collectionVariables.set('oportunidadId', json[0].id);"
+          ] } }]
+        },
+        {
+          "name": "Crear oportunidad",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cliente_id\": {{clienteId}},\n  \"titulo\": \"Pedido creado desde Postman\"\n}" },
+            "url": "{{baseUrl}}/oportunidades"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('responde 201 o 404', function () { pm.expect([201, 404]).to.include(pm.response.code); });",
+            "if (pm.response.code === 201) pm.collectionVariables.set('oportunidadId', pm.response.json().id);"
+          ] } }]
+        },
+        {
+          "name": "Consultar oportunidad",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/oportunidades/{{oportunidadId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde con detalle o 404', function () { pm.expect([200, 404]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Actualizar titulo",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"Pedido actualizado desde Postman\"\n}" },
+            "url": "{{baseUrl}}/oportunidades/{{oportunidadId}}"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde con resultado de oportunidad', function () { pm.expect([200, 404, 422]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Cambiar etapa",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"etapa\": \"propuesta\"\n}" },
+            "url": "{{baseUrl}}/oportunidades/{{oportunidadId}}/etapa"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde con resultado de etapa', function () { pm.expect([200, 404, 409, 422]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Agregar producto a oportunidad",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"producto_id\": {{productoId}},\n  \"cantidad\": 24\n}" },
+            "url": "{{baseUrl}}/oportunidades/{{oportunidadId}}/productos"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde con resultado de linea', function () { pm.expect([201, 404, 409, 422]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Cambiar cantidad de linea",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cantidad\": 48\n}" },
+            "url": "{{baseUrl}}/oportunidades/{{oportunidadId}}/productos/{{lineaId}}"
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde con resultado de linea', function () { pm.expect([200, 404, 409, 422]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "Eliminar linea",
+          "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/oportunidades/{{oportunidadId}}/productos/{{lineaId}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde 204 o 404', function () { pm.expect([204, 404]).to.include(pm.response.code); });"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Reportes",
+      "item": [
+        {
+          "name": "Resumen mensual",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/reportes/resumen?mes={{mes}}" },
+          "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde 200', function () { pm.response.to.have.status(200); });"] } }]
+        }
+      ]
+    }
+  ]
 }
