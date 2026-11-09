@@ -29,7 +29,7 @@ function pestanas(vista) {
         h('a', {
             class: `nav-link${(vista === destino || (destino === 'embudo' && vista === 'detalle')) ? ' active' : ''}`,
             href: `#/${destino}`,
-            'aria-current': vista === destino ? 'page' : null,
+            'aria-current': (vista === destino || (destino === 'embudo' && vista === 'detalle')) ? 'page' : null,
         }, texto));
 
     return h('nav', { class: 'bg-white border-bottom', 'aria-label': 'Secciones' },

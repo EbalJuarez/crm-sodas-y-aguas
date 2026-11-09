@@ -1,4 +1,5 @@
 import { alerta, h, spinner } from '../util/dom.js';
+import { mesActualGuatemala } from '../util/fechas.js';
 
 const MESES = [
     ['01', 'Enero'], ['02', 'Febrero'], ['03', 'Marzo'], ['04', 'Abril'], ['05', 'Mayo'], ['06', 'Junio'],
@@ -6,8 +7,9 @@ const MESES = [
 ];
 
 export function crearVistaResumen({ reporte }) {
-    const [anio, mes] = reporte.mes.split('-');
-    const anioActual = Number(anio || new Date().getUTCFullYear());
+    const periodo = reporte.mes || mesActualGuatemala();
+    const [anio, mes] = periodo.split('-');
+    const anioActual = Number(anio);
     const anios = Array.from({ length: 5 }, (_, indice) => anioActual - 2 + indice);
 
     return h('section', { class: 'vstack gap-3' },
