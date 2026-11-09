@@ -255,9 +255,19 @@ router.post('/', exigirCuerpo, async (request, response) => {
     return response.status(422).json({ errores });
   }
 
-  const vendedorId = request.usuario.id;
+   const vendedorId = request.usuario.id;
 
   return conErroresDeLaBase(response, async (conexion) => {
+    // El panel bloquea users antes de clientes al liberar o reasignar. Mantener el mismo
+    // orden aquí evita el ciclo users -> clientes / clientes -> users entre las dos puertas.
+    const [vendedores] = await conexion.execute(
+      "SELECT id FROM users WHERE id = ? AND rol = 'vendedor' AND activo = 1 FOR UPDATE",
+      [vendedorId],
+    );
+    if (vendedores.length === 0) {
+      return { estado: 401, cuerpo: { error: MENSAJES.cuentaInvalida } };
+    }
+
     // Sección 4: el cliente debe ser de su cartera; se bloquea su fila para que el panel no lo
     // libere a la vez (D3). Ajeno, disponible o inexistente: el mismo 422 (A4.2).
     const [clientes] = await conexion.execute(

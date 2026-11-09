@@ -1,5 +1,22 @@
 # Verificación
 
+## Correcciones críticas del bloque 4
+
+Evidencia adicional obtenida sobre `crm_agua_test`, sin tocar `crm_agua`:
+
+- **S8 interbloqueo:** `POST /api/oportunidades` bloquea primero `users` y después `clientes`, igual que
+  la liberación del panel. `api/scripts/concurrencia-s8.mjs` lanzó las dos peticiones HTTP reales en
+  paralelo y se repitió en tres rondas, reiniciando `crm_agua_test` antes de cada una. Las tres dieron
+  API `201`, panel `302`, ningún `500`, cliente conservado en vendedor 4 y una oportunidad abierta de
+  vendedor 4; D2 y D3 se mantuvieron.
+- **413:** `npm test` comprueba un cuerpo JSON mayor de 100 KB (`413` con `{ error }`) y un JSON roto
+  (`400` con `{ error }`). El error inesperado conserva el `500` genérico.
+- **U+FEFF:** el caso `452\uFEFF1817K` y `5555\uFEFF1234` está en `docs/casos-normalizacion.json`;
+  `npm test` y `php artisan test` recorren el mismo archivo y dan inválido en ambas puertas.
+- **DELETE ajeno:** la ruta de borrado ya no usa model binding implícito antes del middleware de rol.
+  La prueba Laravel verifica que Sergio recibe `403` tanto para un cliente existente como para el id
+  inexistente `999999`; Alicia conserva el borrado permitido y el `404` administrativo para ids no encontrados.
+
 ## Matriz de criterios y evidencia (P3)
 
 | Criterio | Evidencia | Resultado |
