@@ -13,7 +13,7 @@
 | 1.3 Proyecto Laravel 13 + Breeze (Blade) + MySQL | Hecho | `553dbbc`, `ba05381`, `c143e03` |
 | 1.4 Quitar el registro público | Hecho (`/register` → 404) | `7651aa2` |
 | 1.5 Migraciones (9, con FK, UQ y `CHECK`; regla de unidades por caja en dos migraciones aparte) | Hecho | `bbdd0fa` |
-| 1.6 `VerificacionSeeder` (sección 11 exacta) y `SectorSeeder` vacío | Hecho; cifras de control verificadas | `ca57890` |
+| 1.6 `VerificacionSeeder` (sección 11 exacta) y `SectorSeeder` | Hecho; cifras de control verificadas y semilla sectorial agregada | `ca57890`, `24216ac`, `7bce24f` |
 | 1.7 L2: cuentas y roles | Hecho (50 pruebas en verde) | `2d95e98`, `4ab6931`, `cd155ec`, `bcb4ed0`, `0b4755a` |
 | 1.8 Aclaración del teléfono en la especificación | Hecho, sin mover `spec-v1` | `62dbb32` |
 | Evidencia de L1 y L2 | En `docs/verificacion.md`, sección «L1 y L2» | `9b50b18` |
@@ -296,7 +296,7 @@ Piezas para reutilizar en A5 y A6:
   inglés; la 400 ya está en español.
 - **Vocabulario del panel:** las pantallas nuevas dicen «Pedidos por cerrar» y «Punto de venta»
   (spec 1.2), pero las de clientes siguen diciendo «Clientes».
-- **`SectorSeeder` sigue vacío**: RP1–RP4 se probaron con un producto creado a mano (caja de 24).
+- **`SectorSeeder`**: ya contiene datos sectoriales, oportunidades en las seis etapas y productos con venta por caja. RP1–RP4 conservaron su evidencia original con un producto creado a mano (caja de 24).
 - **Decisiones de implementación que la spec no fija** (conviene confirmarlas o escribirlas en la spec):
   orden de respuestas en A4 (404 → 422 de formato → 409 → 422 de estado); tomar un cliente propio da
   409; mensajes sin texto en la spec (etapa inválida, `cliente_id`, `producto_id`, oportunidad

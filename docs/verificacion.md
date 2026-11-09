@@ -110,7 +110,7 @@ Evidencia adicional obtenida sobre `crm_agua_test`, sin tocar `crm_agua`:
 | A4.1–A4.13 | API real: secuencia de A4 («Bloque 3», A4); A4.13 deja el historial igual (49 antes y después) | ✔ |
 | A4.14 | `scripts/concurrencia.mjs` (d): dos `PATCH /etapa` simultáneos dan 1×200 y 1×409; el historial queda con 2 registros | ✔ |
 | A4.15–A4.22 | API real: secuencia de A4; A4.10 deja el historial igual (53 antes y después); A4.21 da 204 sin cuerpo | ✔ |
-| RP1–RP4 | API real: Gaseosa lata 355 ml (caja 24) creada con el modelo del panel (`Producto::create`, como el formulario del catálogo): 30 → 422, 48 → 201 con la copia `unidades_por_caja: 24`, `PATCH` 36 → 422, 72 → 200; con el catálogo en 12, la línea vieja rechaza 60 y una nueva lo acepta. **No** con `SectorSeeder` (todavía vacío) | ✔ |
+| RP1–RP4 | API real: Gaseosa lata 355 ml (caja 24) creada con el modelo del panel (`Producto::create`, como el formulario del catálogo): 30 → 422, 48 → 201 con la copia `unidades_por_caja: 24`, `PATCH` 36 → 422, 72 → 200; con el catálogo en 12, la línea vieja rechaza 60 y una nueva lo acepta. La semilla sectorial actual agrega productos equivalentes para demostración. | ✔ |
 | RP6 | API real: con solo `VerificacionSeeder`, A4.4 da 201; las cifras de control con la semilla sola no cambian (abajo) | ✔ |
 | L5.1 | `EquiposTest`: Sergio sobre Librería Cantel (Carlos) y Hotel Los Pinos (Iván) recibe 404 en editar, actualizar (válido e inválido), asignar y liberar; el cliente no cambia | ✔ |
 | L5.2 | `EquiposTest`: Sergio no asigna a Carlos, Iván, Sandra ni Alicia (mensaje junto a `vendedor_id`); sí a Valeria | ✔ |
