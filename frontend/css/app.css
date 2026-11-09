@@ -96,7 +96,27 @@ body {
 }
 
 .quantity-control {
-    min-width: 10rem;
+    min-width: 0;
+}
+
+.activity-overdue {
+    border-left: .35rem solid #dc3545;
+}
+
+.summary-card {
+    border-top: .25rem solid var(--agua);
+}
+
+.summary-total,
+.summary-pronostico {
+    border-top-color: var(--agua-profunda);
+}
+
+@media (max-width: 767.98px) {
+    .funnel-board {
+        grid-template-columns: 1fr;
+        overflow-x: visible;
+    }
 }
 
 @media (max-width: 575.98px) {
@@ -108,11 +128,33 @@ body {
         width: 100%;
     }
 
-    .funnel-board {
-        grid-template-columns: repeat(4, minmax(13rem, 1fr));
+    .quantity-control {
+        width: 100%;
     }
 
-    .quantity-control {
-        min-width: 8rem;
+    .table-responsive {
+        overflow-x: visible;
+    }
+
+    .table-responsive table {
+        table-layout: fixed;
+        width: 100%;
+        font-size: .875rem;
+    }
+
+    .table-responsive th,
+    .table-responsive td {
+        padding-left: .3rem;
+        padding-right: .3rem;
+        overflow-wrap: anywhere;
+    }
+
+    .quantity-control .form-control {
+        min-width: 0;
+    }
+
+    .quantity-control .btn {
+        padding-left: .35rem;
+        padding-right: .35rem;
     }
 }
