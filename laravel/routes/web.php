@@ -33,7 +33,8 @@ Route::middleware(['auth', 'rol:administrador'])->group(function () {
         ->name('productos.estado');
 
     // L4 (enunciado): solo el administrador elimina clientes; un supervisor recibe 403.
-    Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
+    // Sin model binding: el middleware de rol debe responder 403 antes de consultar el id.
+    Route::delete('/clientes/{clienteId}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
 });
 
 Route::middleware(['auth', 'rol:administrador,supervisor'])->group(function () {

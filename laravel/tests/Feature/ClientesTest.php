@@ -394,6 +394,21 @@ class ClientesTest extends TestCase
         $this->assertNull($disponible->fresh());
     }
 
+    public function test_supervisor_recibe_403_tanto_para_cliente_existente_como_inexistente_al_eliminar(): void
+    {
+        $cliente = $this->crearCliente($this->valeria->id);
+
+        $this->actingAs($this->sergio)->delete(route('clientes.destroy', $cliente))
+            ->assertForbidden();
+        $this->actingAs($this->sergio)->delete(route('clientes.destroy', 999999))
+            ->assertForbidden();
+
+        $this->actingAs($this->alicia)->delete(route('clientes.destroy', 999999))
+            ->assertNotFound();
+
+        $this->assertNotNull($cliente->fresh());
+    }
+
     public function test_asignar_y_liberar_bloquean_primero_users_y_luego_clientes(): void
     {
         $cliente = $this->crearCliente();

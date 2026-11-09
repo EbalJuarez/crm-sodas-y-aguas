@@ -201,13 +201,13 @@ class ClienteController extends Controller
         return redirect()->route('clientes.index')->with('status', 'Cliente liberado.');
     }
 
-    public function destroy(Request $request, Cliente $cliente): RedirectResponse
+    public function destroy(Request $request, string $clienteId): RedirectResponse
     {
         // La ruta ya exige rol:administrador; se repite aquí por si la acción se monta en otra ruta.
         abort_unless($request->user()->esAdministrador(), 403);
 
-        DB::transaction(function () use ($cliente): void {
-            $bloqueado = Cliente::whereKey($cliente->id)->lockForUpdate()->firstOrFail();
+        DB::transaction(function () use ($clienteId): void {
+            $bloqueado = Cliente::whereKey($clienteId)->lockForUpdate()->firstOrFail();
 
             if (DB::table('oportunidades')->where('cliente_id', $bloqueado->id)->exists()) {
                 throw ValidationException::withMessages([
