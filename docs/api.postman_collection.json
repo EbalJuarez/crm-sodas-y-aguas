@@ -12,6 +12,7 @@
     { "key": "actividadId", "value": "" },
     { "key": "lineaId", "value": "" },
     { "key": "productoId", "value": "" },
+    { "key": "cajaProductoId", "value": "" },
     { "key": "mes", "value": "2026-10" }
   ],
   "item": [
@@ -206,6 +207,19 @@
             "url": "{{baseUrl}}/oportunidades/{{oportunidadId}}/productos"
           },
           "event": [{ "listen": "test", "script": { "exec": ["pm.test('responde con resultado de linea', function () { pm.expect([201, 404, 409, 422]).to.include(pm.response.code); });"] } }]
+        },
+        {
+          "name": "RP1-RP3 rechazar cantidad incompleta",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"producto_id\": {{cajaProductoId}},\n  \"cantidad\": 30\n}" },
+            "url": "{{baseUrl}}/oportunidades/{{oportunidadId}}/productos"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('rechaza cantidad que no es multiplo', function () { pm.expect([422, 404]).to.include(pm.response.code); });",
+            "if (pm.response.code === 422) pm.expect(pm.response.json().errores.cantidad).to.be.a('string');"
+          ] } }]
         },
         {
           "name": "Cambiar cantidad de linea",
