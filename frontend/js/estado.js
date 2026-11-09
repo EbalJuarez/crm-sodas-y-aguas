@@ -41,7 +41,32 @@ export function altaVacia() {
     };
 }
 
-/** vista: 'login' | 'verificando' | 'cartera' | 'disponibles'. */
+export function nuevaOportunidadVacia() {
+    return {
+        abierta: false,
+        datos: { cliente_id: '', titulo: '' },
+        errores: {},
+        error: null,
+        enviando: false,
+    };
+}
+
+export function detalleVacio() {
+    return {
+        id: null,
+        datos: null,
+        catalogo: [],
+        cargando: false,
+        error: null,
+        titulo: '',
+        tituloErrores: {},
+        guardandoTitulo: false,
+        producto: { producto_id: '', cantidad: '', errores: {}, error: null, enviando: false },
+        etapa: { etapa: '', motivo: '', errores: {}, error: null, enviando: false },
+    };
+}
+
+/** vista: 'login' | 'verificando' | 'cartera' | 'disponibles' | 'embudo' | 'detalle'. */
 export function estadoInicial(token) {
     return {
         token,
@@ -53,6 +78,10 @@ export function estadoInicial(token) {
         cartera: { clientes: [], total: null, q: '', cargando: false, cargada: false, error: null },
         alta: altaVacia(),
         disponibles: { lista: [], cargando: false, cargada: false, mensaje: null, tomando: null },
+        oportunidades: {
+            lista: [], cargando: false, cargada: false, error: null, nueva: nuevaOportunidadVacia(),
+        },
+        detalle: detalleVacio(),
     };
 }
 

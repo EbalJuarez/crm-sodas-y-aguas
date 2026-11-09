@@ -95,3 +95,46 @@ export function crearCliente(token, datos) {
 export function tomarCliente(token, id) {
     return solicitar(`/clientes/${encodeURIComponent(id)}/tomar`, { method: 'POST', token });
 }
+
+export function listarOportunidades(token, etapa = '') {
+    const consulta = etapa === '' ? '' : `?etapa=${encodeURIComponent(etapa)}`;
+    return solicitar(`/oportunidades${consulta}`, { token });
+}
+
+export function crearOportunidad(token, datos) {
+    return solicitar('/oportunidades', { method: 'POST', body: datos, token });
+}
+
+export function obtenerOportunidad(token, id) {
+    return solicitar(`/oportunidades/${encodeURIComponent(id)}`, { token });
+}
+
+export function editarOportunidad(token, id, datos) {
+    return solicitar(`/oportunidades/${encodeURIComponent(id)}`, { method: 'PATCH', body: datos, token });
+}
+
+export function cambiarEtapaOportunidad(token, id, datos) {
+    return solicitar(`/oportunidades/${encodeURIComponent(id)}/etapa`, { method: 'PATCH', body: datos, token });
+}
+
+export function listarProductos(token) {
+    return solicitar('/productos', { token });
+}
+
+export function agregarProductoOportunidad(token, oportunidadId, datos) {
+    return solicitar(`/oportunidades/${encodeURIComponent(oportunidadId)}/productos`, {
+        method: 'POST', body: datos, token,
+    });
+}
+
+export function cambiarCantidadProducto(token, oportunidadId, lineaId, cantidad) {
+    return solicitar(`/oportunidades/${encodeURIComponent(oportunidadId)}/productos/${encodeURIComponent(lineaId)}`, {
+        method: 'PATCH', body: { cantidad }, token,
+    });
+}
+
+export function eliminarProductoOportunidad(token, oportunidadId, lineaId) {
+    return solicitar(`/oportunidades/${encodeURIComponent(oportunidadId)}/productos/${encodeURIComponent(lineaId)}`, {
+        method: 'DELETE', token,
+    });
+}

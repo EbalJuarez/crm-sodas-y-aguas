@@ -6,12 +6,23 @@ import {
     iniciarSesion,
     listarCartera,
     listarDisponibles,
+    listarOportunidades,
+    crearOportunidad,
+    obtenerOportunidad,
+    editarOportunidad,
+    cambiarEtapaOportunidad,
+    listarProductos,
+    agregarProductoOportunidad,
+    cambiarCantidadProducto,
+    eliminarProductoOportunidad,
     tomarCliente,
 } from './api.js';
 import { ESPERA_BUSQUEDA_MS } from './config.js';
 import {
     actualizar,
     altaVacia,
+    detalleVacio,
+    nuevaOportunidadVacia,
     borrarToken,
     estadoInicial,
     guardarToken,
@@ -20,6 +31,8 @@ import {
 } from './estado.js';
 import { crearVistaCartera } from './vistas/cartera.js';
 import { crearVistaDisponibles } from './vistas/disponibles.js';
+import { crearVistaEmbudo } from './vistas/embudo.js';
+import { crearVistaDetalle } from './vistas/detalle-oportunidad.js';
 import { crearLayout, crearVistaVerificando } from './vistas/layout.js';
 import { crearVistaLogin } from './vistas/login.js';
 
@@ -41,6 +54,8 @@ function vistaActual(estado) {
         case 'login': return crearVistaLogin(estado);
         case 'verificando': return crearVistaVerificando(estado);
         case 'disponibles': return crearLayout(estado, crearVistaDisponibles(estado));
+        case 'embudo': return crearLayout(estado, crearVistaEmbudo(estado));
+        case 'detalle': return crearLayout(estado, crearVistaDetalle(estado));
         default: return crearLayout(estado, crearVistaCartera(estado));
     }
 }
@@ -97,8 +112,18 @@ function terminarSesion(aviso = null) {
     }
 }
 
-function vistaDesdeHash() {
-    return window.location.hash === '#/disponibles' ? 'disponibles' : 'cartera';
+function rutaDesdeHash() {
+    const coincidencia = window.location.hash.match(/^#\/oportunidades\/(\d+)$/);
+    if (coincidencia) {
+        return { vista: 'detalle', id: Number(coincidencia[1]) };
+    }
+    if (window.location.hash === '#/disponibles') {
+        return { vista: 'disponibles', id: null };
+    }
+    if (window.location.hash === '#/embudo') {
+        return { vista: 'embudo', id: null };
+    }
+    return { vista: 'cartera', id: null };
 }
 
 /** Un error de una petición con sesión: el 401 ya se atendió (volvió al login). */
@@ -119,7 +144,8 @@ async function verificarSesion() {
     actualizar((e) => { e.vista = 'verificando'; e.conexion = null; });
     const correcto = await cargarCartera({ conTotal: true });
     if (correcto && miSesion === sesion) {
-        irA(vistaDesdeHash());
+        const ruta = rutaDesdeHash();
+        irA(ruta.vista, ruta.id);
     }
 }
 
@@ -236,12 +262,194 @@ async function cargarDisponibles() {
     }
 }
 
-function irA(vista) {
+async function cargarOportunidades() {
+    const miSesion = sesion;
+    actualizar((e) => { e.oportunidades.cargando = true; e.oportunidades.error = null; });
+    try {
+        const lista = await listarOportunidades(obtenerEstado().token);
+        if (miSesion !== sesion) return;
+        actualizar((e) => {
+            e.oportunidades.lista = lista;
+            e.oportunidades.cargada = true;
+            e.oportunidades.cargando = false;
+            e.conexion = null;
+        });
+    } catch (error) {
+        if (miSesion !== sesion) return;
+        const mensaje = describirError(error);
+        actualizar((e) => {
+            e.oportunidades.cargando = false;
+            if (error instanceof ConexionError) e.conexion = mensaje;
+            else if (mensaje) e.oportunidades.error = mensaje;
+        });
+    }
+}
+
+async function cargarDetalle(id) {
+    const miSesion = sesion;
+    actualizar((e) => {
+        e.detalle = { ...detalleVacio(), id, cargando: true };
+    });
+    try {
+        const [datos, catalogo] = await Promise.all([
+            obtenerOportunidad(obtenerEstado().token, id),
+            listarProductos(obtenerEstado().token),
+        ]);
+        if (miSesion !== sesion) return;
+        actualizar((e) => {
+            e.detalle = {
+                ...detalleVacio(), id, datos, catalogo, titulo: datos.titulo,
+                cargando: false,
+            };
+            e.conexion = null;
+        });
+    } catch (error) {
+        if (miSesion !== sesion) return;
+        const mensaje = describirError(error);
+        actualizar((e) => {
+            e.detalle.cargando = false;
+            e.detalle.error = mensaje;
+            if (error instanceof ConexionError) e.conexion = mensaje;
+        });
+    }
+}
+
+function irA(vista, id = null) {
     actualizar((e) => { e.vista = vista; });
     if (vista === 'disponibles') {
         cargarDisponibles();
+    } else if (vista === 'embudo') {
+        cargarOportunidades();
+    } else if (vista === 'detalle') {
+        cargarDetalle(id);
     } else {
         cargarCartera({ conTotal: true });
+    }
+}
+
+function abrirRuta(vista, id = null) {
+    const hash = vista === 'detalle' ? `#/oportunidades/${id}` : `#/${vista}`;
+    if (window.location.hash === hash) {
+        irA(vista, id);
+    } else {
+        window.location.hash = hash;
+    }
+}
+
+function erroresDe(error) {
+    return error instanceof ApiError && error.status === 422 ? (error.payload?.errores ?? {}) : {};
+}
+
+function actualizarDetalle(datos) {
+    actualizar((e) => {
+        e.detalle.datos = datos;
+        e.detalle.titulo = datos.titulo;
+        e.detalle.producto = { producto_id: '', cantidad: '', errores: {}, error: null, enviando: false };
+        e.detalle.etapa = { etapa: '', motivo: '', errores: {}, error: null, enviando: false };
+        e.conexion = null;
+    });
+}
+
+async function enviarNuevaOportunidad(form) {
+    const datosFormulario = new FormData(form);
+    const datos = {
+        cliente_id: Number(datosFormulario.get('cliente_id')),
+        titulo: String(datosFormulario.get('titulo') ?? ''),
+    };
+    actualizar((e) => {
+        e.oportunidades.nueva.datos = { cliente_id: String(datos.cliente_id || ''), titulo: datos.titulo };
+        e.oportunidades.nueva.errores = {};
+        e.oportunidades.nueva.error = null;
+        e.oportunidades.nueva.enviando = true;
+    });
+    try {
+        const oportunidad = await crearOportunidad(obtenerEstado().token, datos);
+        actualizar((e) => { e.oportunidades.nueva = nuevaOportunidadVacia(); });
+        abrirRuta('detalle', oportunidad.id);
+    } catch (error) {
+        actualizar((e) => {
+            e.oportunidades.nueva.enviando = false;
+            if (error instanceof ApiError && error.status === 422) e.oportunidades.nueva.errores = erroresDe(error);
+            else e.oportunidades.nueva.error = describirError(error);
+        });
+    }
+}
+
+async function enviarTitulo(form) {
+    const titulo = String(new FormData(form).get('titulo') ?? '');
+    const { id } = obtenerEstado().detalle;
+    actualizar((e) => { e.detalle.titulo = titulo; e.detalle.tituloErrores = {}; e.detalle.guardandoTitulo = true; });
+    try {
+        actualizarDetalle(await editarOportunidad(obtenerEstado().token, id, { titulo }));
+    } catch (error) {
+        actualizar((e) => {
+            e.detalle.guardandoTitulo = false;
+            e.detalle.tituloErrores = error instanceof ApiError && error.status === 422 ? erroresDe(error) : { _: describirError(error) };
+        });
+    }
+}
+
+async function enviarProducto(form) {
+    const valores = new FormData(form);
+    const { id } = obtenerEstado().detalle;
+    const datos = { producto_id: Number(valores.get('producto_id')), cantidad: Number(valores.get('cantidad')) };
+    actualizar((e) => { e.detalle.producto.errores = {}; e.detalle.producto.error = null; e.detalle.producto.enviando = true; });
+    try {
+        actualizarDetalle(await agregarProductoOportunidad(obtenerEstado().token, id, datos));
+    } catch (error) {
+        actualizar((e) => {
+            e.detalle.producto.enviando = false;
+            if (error instanceof ApiError && error.status === 422) e.detalle.producto.errores = erroresDe(error);
+            else e.detalle.producto.error = describirError(error);
+        });
+    }
+}
+
+async function cambiarCantidad(idLinea) {
+    const { id } = obtenerEstado().detalle;
+    const cantidad = Number(document.getElementById(`cantidad-${idLinea}`)?.value);
+    try {
+        actualizarDetalle(await cambiarCantidadProducto(obtenerEstado().token, id, idLinea, cantidad));
+    } catch (error) {
+        actualizar((e) => {
+            if (error instanceof ApiError && error.status === 422) e.detalle.producto.errores = erroresDe(error);
+            else e.detalle.producto.error = describirError(error);
+        });
+    }
+}
+
+async function eliminarProducto(idLinea) {
+    const { id } = obtenerEstado().detalle;
+    try {
+        await eliminarProductoOportunidad(obtenerEstado().token, id, idLinea);
+        await cargarDetalle(id);
+    } catch (error) {
+        actualizar((e) => { e.detalle.producto.error = describirError(error); });
+    }
+}
+
+async function enviarEtapa(form) {
+    const valores = new FormData(form);
+    const etapa = String(valores.get('etapa') ?? '');
+    const datos = { etapa };
+    if (etapa === 'perdida') datos.motivo_perdida = String(valores.get('motivo_perdida') ?? '');
+    const { id } = obtenerEstado().detalle;
+    actualizar((e) => {
+        e.detalle.etapa.etapa = etapa;
+        e.detalle.etapa.motivo = String(valores.get('motivo_perdida') ?? '');
+        e.detalle.etapa.errores = {};
+        e.detalle.etapa.error = null;
+        e.detalle.etapa.enviando = true;
+    });
+    try {
+        actualizarDetalle(await cambiarEtapaOportunidad(obtenerEstado().token, id, datos));
+        cargarOportunidades();
+    } catch (error) {
+        actualizar((e) => {
+            e.detalle.etapa.enviando = false;
+            if (error instanceof ApiError && error.status === 422) e.detalle.etapa.errores = erroresDe(error);
+            else e.detalle.etapa.error = describirError(error);
+        });
     }
 }
 
@@ -345,6 +553,14 @@ app.addEventListener('submit', (event) => {
         procesarLogin(form);
     } else if (form.dataset.form === 'alta') {
         enviarAlta(form);
+    } else if (form.dataset.form === 'crear-oportunidad') {
+        enviarNuevaOportunidad(form);
+    } else if (form.dataset.form === 'editar-titulo') {
+        enviarTitulo(form);
+    } else if (form.dataset.form === 'agregar-producto') {
+        enviarProducto(form);
+    } else if (form.dataset.form === 'cambiar-etapa') {
+        enviarEtapa(form);
     }
 });
 
@@ -356,6 +572,17 @@ app.addEventListener('input', (event) => {
         actualizar((e) => { e.login.correo = campo.value; }, { render: false });
     } else if (form === 'alta' && campo.name in obtenerEstado().alta.datos) {
         actualizar((e) => { e.alta.datos[campo.name] = campo.value; }, { render: false });
+    } else if (form === 'crear-oportunidad' && campo.name in obtenerEstado().oportunidades.nueva.datos) {
+        actualizar((e) => { e.oportunidades.nueva.datos[campo.name] = campo.value; }, { render: false });
+    } else if (form === 'editar-titulo' && campo.name === 'titulo') {
+        actualizar((e) => { e.detalle.titulo = campo.value; }, { render: false });
+    } else if (form === 'agregar-producto' && ['producto_id', 'cantidad'].includes(campo.name)) {
+        actualizar((e) => { e.detalle.producto[campo.name] = campo.value; }, { render: false });
+    } else if (form === 'cambiar-etapa' && ['etapa', 'motivo_perdida'].includes(campo.name)) {
+        actualizar((e) => {
+            if (campo.name === 'etapa') e.detalle.etapa.etapa = campo.value;
+            else e.detalle.etapa.motivo = campo.value;
+        }, { render: false });
     } else if (campo.id === 'busqueda') {
         actualizar((e) => { e.cartera.q = campo.value; }, { render: false });
         clearTimeout(temporizador);
@@ -380,6 +607,24 @@ app.addEventListener('click', (event) => {
         case 'cancelar-alta':
             actualizar((e) => { e.alta = altaVacia(); });
             break;
+        case 'abrir-nueva-oportunidad':
+            actualizar((e) => { e.oportunidades.nueva = { ...nuevaOportunidadVacia(), abierta: true }; });
+            break;
+        case 'cancelar-nueva-oportunidad':
+            actualizar((e) => { e.oportunidades.nueva = nuevaOportunidadVacia(); });
+            break;
+        case 'abrir-oportunidad':
+            abrirRuta('detalle', Number(boton.dataset.id));
+            break;
+        case 'volver-embudo':
+            abrirRuta('embudo');
+            break;
+        case 'cambiar-cantidad':
+            cambiarCantidad(Number(boton.dataset.id));
+            break;
+        case 'eliminar-producto':
+            eliminarProducto(Number(boton.dataset.id));
+            break;
         case 'tomar':
             tomar(Number(boton.dataset.id));
             break;
@@ -401,8 +646,19 @@ app.addEventListener('click', (event) => {
 
 window.addEventListener('hashchange', () => {
     const { token, vista } = obtenerEstado();
-    if (token && vista !== 'verificando' && vista !== vistaDesdeHash()) {
-        irA(vistaDesdeHash());
+    const ruta = rutaDesdeHash();
+    if (token && vista !== 'verificando') {
+        irA(ruta.vista, ruta.id);
+    }
+});
+
+app.addEventListener('change', (event) => {
+    const campo = event.target;
+    if (campo.closest('[data-form="cambiar-etapa"]') && ['etapa', 'motivo_perdida'].includes(campo.name)) {
+        actualizar((e) => {
+            if (campo.name === 'etapa') e.detalle.etapa.etapa = campo.value;
+            else e.detalle.etapa.motivo = campo.value;
+        });
     }
 });
 

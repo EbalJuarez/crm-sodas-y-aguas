@@ -75,6 +75,30 @@ body {
     box-shadow: 0 .75rem 2rem rgba(18, 54, 74, .1);
 }
 
+.funnel-board {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(14rem, 1fr));
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: .25rem;
+}
+
+.funnel-column {
+    min-height: 11rem;
+    padding: .85rem;
+    border: 1px solid rgba(18, 54, 74, .1);
+    border-radius: .75rem;
+    background: rgba(255, 255, 255, .68);
+}
+
+.opportunity-card {
+    border-radius: .55rem !important;
+}
+
+.quantity-control {
+    min-width: 10rem;
+}
+
 @media (max-width: 575.98px) {
     .login-page {
         padding: 1rem;
@@ -82,5 +106,13 @@ body {
 
     .login-card {
         width: 100%;
+    }
+
+    .funnel-board {
+        grid-template-columns: repeat(4, minmax(13rem, 1fr));
+    }
+
+    .quantity-control {
+        min-width: 8rem;
     }
 }

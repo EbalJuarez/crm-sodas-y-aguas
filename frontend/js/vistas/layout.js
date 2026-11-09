@@ -27,7 +27,7 @@ export function crearLayout(estado, contenido) {
 function pestanas(vista) {
     const pestana = (destino, texto) => h('li', { class: 'nav-item' },
         h('a', {
-            class: `nav-link${vista === destino ? ' active' : ''}`,
+            class: `nav-link${(vista === destino || (destino === 'embudo' && vista === 'detalle')) ? ' active' : ''}`,
             href: `#/${destino}`,
             'aria-current': vista === destino ? 'page' : null,
         }, texto));
@@ -36,7 +36,8 @@ function pestanas(vista) {
         h('div', { class: 'container' },
             h('ul', { class: 'nav nav-underline' },
                 pestana('cartera', 'Mi cartera'),
-                pestana('disponibles', 'Disponibles'))));
+                pestana('disponibles', 'Disponibles'),
+                pestana('embudo', 'Pedidos por cerrar'))));
 }
 
 /** Con otro origen (p. ej. localhost:5500) CORS bloquea todas las peticiones: se explica aquí. */
