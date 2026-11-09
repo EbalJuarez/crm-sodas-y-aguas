@@ -304,6 +304,7 @@ con Hotel Los Pinos asignado).
 | A7.1 | Cualquier ruta, incluida una inexistente | responde con error | el cuerpo es JSON, nunca HTML |
 | A7.2 | Una validación fallida | se responde | 422 con `{ "errores": { campo: mensaje } }`, un mensaje por campo, en español y tratando de usted |
 | A7.3 | Un error inesperado (p. ej. MySQL apagado) | se responde | 500 con un mensaje genérico; el detalle queda solo en la consola |
+| A7.4 | Un cuerpo JSON supera 100 KB | se responde | 413 con `{ "error": "..." }`; no se procesa como un 500 |
 
 #### A8 — Documentación
 
@@ -499,6 +500,7 @@ Reglas de forma:
 | 409 | Choca con el estado: cartera llena, cliente ya tomado, NIT o teléfono repetido, producto repetido, oportunidad cerrada, transición no permitida (D1) |
 | 422 | Un campo del **cuerpo** viola una regla: `{ errores }` con un mensaje por campo. Incluye ganar sin productos (`etapa`) y la regla propia (`cantidad`) |
 | 500 | Error inesperado; mensaje genérico, detalle solo en la consola |
+| 413 | El cuerpo JSON supera el límite permitido de 100 KB; respuesta JSON controlada |
 
 **400 contra 422.** Un mismo nombre puede dar códigos distintos según dónde llegue:
 `GET /oportunidades?etapa=xyz` es un filtro de query que no existe → **400**;
@@ -857,3 +859,4 @@ RP1, RP2 y RP3 van en la colección de Postman (A8.2).
 | 1.0 | `spec-v1` (por crear) | Cierra P-5 (las actividades no se tocan al reasignar; visibilidad por cartera actual), aclaración a R8 y excepción a A3.3 en D2; criterios A5.12–A5.14, A6.6, F4.4, F5.3; D3 solo con mensaje del panel. Sin pendientes |
 | 1.1 | — (`spec-v1` no se mueve) | Aclaración en 3.4: cuándo se quita el prefijo `+502`/`502` del teléfono (solo si empieza con `+502`, o si quedan exactamente 11 dígitos que empiezan con 502), con ejemplos. No cambia ningún criterio de la semilla |
 | 1.2 | — (`spec-v1` no se mueve; cambio sobre v1, no es v2) | Aclaraciones del bloque 2: login sin cuerpo = 400 y `{}` = 422 por campo (A1.7 y 3.3); el middleware cubre todo `/api` salvo `POST /api/auth/login`, y una ruta inexistente responde 401 sin token y 404 con token (nota de A2); solo el administrador elimina clientes, el supervisor recibe 403 (L4.18 y sección 4, como dice L4 del enunciado). No cambia ningún criterio de la semilla ni las cifras de control |
+| 1.3 | — (`spec-v1` no se mueve; cambio sobre v1, no es v2) | Aclara 413 para cuerpos JSON mayores de 100 KB y rechaza U+FEFF como separador de NIT o teléfono, para conservar exactamente los caracteres aceptados por Laravel. No cambia los contratos existentes ni las cifras de control |

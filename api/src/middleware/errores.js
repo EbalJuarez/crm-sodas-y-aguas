@@ -11,6 +11,12 @@ export function errorHandler(error, _request, response, _next) {
     });
   }
 
+  if (error.type === 'entity.too.large' || error.status === 413) {
+    return response.status(413).json({
+      error: 'El cuerpo de la petición supera el límite permitido de 100 KB.',
+    });
+  }
+
   console.error(error);
 
   return response.status(500).json({
